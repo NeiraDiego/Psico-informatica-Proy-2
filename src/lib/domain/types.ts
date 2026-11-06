@@ -26,6 +26,9 @@ export interface BoardChange {
 export interface BoardMovement {
 	type: 'click' | 'drag';
 	changes: BoardChange[];
+	startedAt: number;
+	endedAt: number;
+	closure: 'normal' | 'cancelled';
 }
 
 export interface ProtocolSequence {

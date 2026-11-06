@@ -16,11 +16,12 @@
 	} = $props();
 
 	let cells = $state<CellState[]>([]);
-	let dragStart = $state<{ x: number; y: number; index: number } | null>(null);
+	let dragStart = $state<{ x: number; y: number; index: number; startedAt: number } | null>(null);
 	let dragging = $state(false);
 	let dragChanges = $state(0);
 	let visitedCells = new Set<number>();
 	let suppressClick = false;
+	let clickStartedAt = 0;
 	const size = $derived(board.regions.length);
 
 	$effect(() => {
@@ -32,12 +33,12 @@
 		return cell === 'empty' ? 'mark' : cell === 'mark' ? 'queen' : 'empty';
 	}
 
-	function updateCell(index: number) {
+	function updateCell(index: number, startedAt: number) {
 		if (disabled) return;
 		const previous = cells[index];
 		const next = nextState(previous);
 		cells[index] = next;
-		onmove?.({ type: 'click', changes: [{ index, previous, next }] });
+		onmove?.({ type: 'click', changes: [{ index, previous, next }], startedAt, endedAt: performance.now(), closure: 'normal' });
 	}
 
 	function markForDrag(index: number): BoardChange | undefined {
@@ -50,7 +51,9 @@
 
 	function startPointer(event: PointerEvent, index: number) {
 		if (disabled) return;
-		dragStart = { x: event.clientX, y: event.clientY, index };
+		const startedAt = performance.now();
+		dragStart = { x: event.clientX, y: event.clientY, index, startedAt };
+		clickStartedAt = startedAt;
 		dragging = false;
 		dragChanges = 0;
 		visitedCells = new Set();
@@ -68,14 +71,15 @@
 		if (target?.dataset.cellIndex) markForDrag(Number(target.dataset.cellIndex));
 	}
 
-	function finishPointer() {
+	function finishPointer(cancelled = false) {
 		if (dragging) {
 			suppressClick = true;
 			if (dragChanges > 0) {
 				const changes = [...visitedCells].map((index) => ({ index, previous: 'empty' as const, next: 'mark' as const }));
-				onmove?.({ type: 'drag', changes });
+				onmove?.({ type: 'drag', changes, startedAt: dragStart?.startedAt ?? performance.now(), endedAt: performance.now(), closure: cancelled ? 'cancelled' : 'normal' });
 			}
 		}
+		if (cancelled && !dragging) clickStartedAt = 0;
 		dragStart = null;
 		dragging = false;
 	}
@@ -85,7 +89,8 @@
 			suppressClick = false;
 			return;
 		}
-		updateCell(index);
+		updateCell(index, clickStartedAt || performance.now());
+		clickStartedAt = 0;
 	}
 </script>
 
@@ -105,8 +110,8 @@
 			aria-label={`Fila ${row + 1}, columna ${column + 1}: ${cell === 'empty' ? 'vacia' : cell === 'mark' ? 'marca X' : 'reina'}`}
 			onpointerdown={(event) => startPointer(event, index)}
 			onpointermove={movePointer}
-			onpointerup={finishPointer}
-			onpointercancel={finishPointer}
+			onpointerup={() => finishPointer()}
+			onpointercancel={() => finishPointer(true)}
 			onclick={() => handleClick(index)}
 		>
 			{cell === 'mark' ? 'X' : cell === 'queen' ? 'Q' : ''}

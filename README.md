@@ -1,6 +1,6 @@
 # Queens: Psicoinformatica Proyecto 2
 
-Aplicacion SvelteKit para el experimento Queens. Esta primera entrega es una demostracion navegable con configuracion y datos sinteticos. **No esta habilitada para recolectar datos reales.**
+Aplicacion SvelteKit para el experimento Queens. La interfaz y el almacenamiento local estan implementados, pero **no debe iniciarse recoleccion real** hasta aprobar protocolo, textos, tableros y configurar Supabase.
 
 ## Ejecutar
 
@@ -47,6 +47,16 @@ El reconocimiento de regreso se guarda solo en `localStorage` y contiene unicame
 - Tras completar la demostracion aparecen las mismas opciones de regreso.
 - **Configuracion** se muestra solo para el correo sintético indicado arriba. La version definitiva consultara `ADMIN_EMAILS` exclusivamente en el servidor. La coincidencia de correo sin verificacion no es autenticacion robusta y no debe dar acceso a historiales ni datos de participantes.
 - La configuracion todavia no persiste ni publica cambios. La carga definitiva validara matriz 9x9, nueve regiones, conectividad y soluciones, y publicara versiones nuevas sin alterar sesiones historicas.
+
+## Medicion y envio
+
+- Cada puzle experimental inicia un reloj monotono de 120 segundos al pulsar `Iniciar tarea`. El valor mostrado se deriva del instante limite, por lo que no depende de descontar ticks.
+- Por movimiento se conserva indice, tipo, inicio y fin relativos, duracion, latencia, cambios de celdas y cierre normal o cancelado. La lista `movement_latencies_ms` se deriva de esos eventos.
+- Los intentos terminados se guardan primero en IndexedDB y se reintentan al recuperar conexion. La aplicacion solo muestra `Resultados enviados` cuando `PUT /api/attempts/{id}` responde correctamente.
+- Sin Supabase configurado, la sesion y los intentos quedan pendientes localmente. No se simula una confirmacion de envio.
+- En Configuracion, los botones de respaldo descargan dos CSV de la cola pendiente: intentos y movimientos. No incluyen nombre ni correo, y solo contienen los registros almacenados en el navegador actual.
+
+Para habilitar el backend, copie `.env.example` a `.env` y configure `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` solo en el entorno de servidor. Aplique antes la migracion `supabase/migrations/202611060001_initial.sql`. La clave de servicio no se expone al navegador.
 
 Actualmente Configuracion permite cargar un JSON **solo durante la pagina abierta** para probar un tablero en juego libre. Puede ser un tablero individual o un catalogo cuyo objeto raiz contiene `boards`. El archivo `data/queensgame-9x9.json` es un catalogo listo para cargar. Cada tablero debe contener `regions`, una matriz cuadrada de letras mayusculas; cada letra representa una region y debe formar una zona conexa por sus lados. Debe haber tantas regiones como filas. `queenRowsByColumn` es una lista con una entrada por columna, de izquierda a derecha, que indica la fila donde se ubica la reina de la solucion declarada.
 

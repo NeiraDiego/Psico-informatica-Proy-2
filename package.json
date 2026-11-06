@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-	"scripts": {
-		"boards:convert": "node scripts/convert-queens-maps.mjs ../diez_mapas_9x9.json data/queensgame-9x9.json",
-		"dev": "vite dev",
+  "scripts": {
+    "boards:convert": "node scripts/convert-queens-maps.mjs ../diez_mapas_9x9.json data/queensgame-9x9.json",
+    "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync",
@@ -15,6 +15,7 @@
     "@sveltejs/adapter-vercel": "^6.3.5",
     "@sveltejs/kit": "^2.63.0",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "@types/node": "^26.6.6",
     "svelte": "5.57.1",
     "svelte-check": "^4.6.0",
     "typescript": "^6.0.3",

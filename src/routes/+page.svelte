@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import QueensBoard from '$lib/components/QueensBoard.svelte';
+	import { flushAttemptOutbox, queueAttempt, queuedAttempts } from '$lib/client/outbox';
 	import { validateUploadedBoard } from '$lib/domain/board-validation';
+	import { isSolved } from '$lib/domain/queens-rules';
+	import { addMovement, completeAttempt, createAttempt, type AttemptDraft, type CompletedAttempt } from '$lib/experiment/measurement';
 	import { DEMO_ADMIN_EMAIL, demoPuzzles, demoSequences, getPuzzle, pickDemoGroup } from '$lib/protocol/demo';
 	import type { BoardDefinition, BoardMovement, CellState, Group, PuzzleDefinition } from '$lib/domain/types';
 
@@ -17,6 +20,13 @@
 	let tutorialMarkedNeighbors = $state<number[]>([]);
 	let tutorialDragComplete = $state(false);
 	let moveCount = $state(0);
+	let activeAttempt = $state<AttemptDraft | null>(null);
+	let completedAttempts = $state<CompletedAttempt[]>([]);
+	let puzzleLocked = $state(false);
+	let timeRemainingMs = $state(120000);
+	let deliveryStatus = $state<'idle' | 'pending' | 'sent'>('idle');
+	let sessionRegistrationStatus = $state<'idle' | 'pending' | 'ready'>('idle');
+	let exportMessage = $state('');
 	let freePuzzle = $state<PuzzleDefinition>(demoPuzzles[1]);
 	let freeStartedAt = $state(0);
 	let freeMoves = $state(0);
@@ -64,6 +74,22 @@
 				localStorage.removeItem('queens-demo-emails');
 			}
 		}
+		void flushSavedAttempts();
+		const retry = () => void flushSavedAttempts();
+		window.addEventListener('online', retry);
+		return () => window.removeEventListener('online', retry);
+	});
+
+	$effect(() => {
+		if (screen !== 'puzzle' || !activeAttempt || puzzleLocked) return;
+		const updateRemainingTime = () => {
+			const remaining = Math.max(0, 120000 - (performance.now() - activeAttempt!.started_at_performance));
+			timeRemainingMs = Math.ceil(remaining);
+			if (remaining === 0) closeCurrentAttempt('timeout');
+		};
+		updateRemainingTime();
+		const intervalId = window.setInterval(updateRemainingTime, 100);
+		return () => window.clearInterval(intervalId);
 	});
 
 	function hasKnownEmail(value: string) {
@@ -76,7 +102,7 @@
 		}
 	}
 
-	function register() {
+	async function register() {
 		const normalized = email.trim().toLowerCase();
 		if (!name.trim() || !/^\S+@\S+\.\S+$/.test(normalized)) return;
 		returning = hasKnownEmail(normalized);
@@ -86,7 +112,35 @@
 			localStorage.setItem('queens-demo-emails', JSON.stringify([...new Set([...emails, normalized])]));
 		}
 		email = normalized;
+		if (!returning) {
+			sessionRegistrationStatus = 'pending';
+			const serverGroup = await registerServerSession(name.trim(), normalized);
+			group = serverGroup ?? pickDemoGroup();
+			sessionRegistrationStatus = serverGroup ? 'ready' : 'idle';
+		}
 		screen = returning ? 'hub' : 'overview';
+	}
+
+	async function registerServerSession(participantName: string, participantEmail: string): Promise<Group | null> {
+		const keyName = `queens-session-key:${participantEmail}`;
+		let idempotencyKey = localStorage.getItem(keyName);
+		if (!idempotencyKey) {
+			idempotencyKey = crypto.randomUUID();
+			localStorage.setItem(keyName, idempotencyKey);
+		}
+		try {
+			const response = await fetch('/api/sessions', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ name: participantName, email: participantEmail, idempotency_key: idempotencyKey }),
+				credentials: 'same-origin'
+			});
+			if (!response.ok) return null;
+			const body = await response.json() as { group?: unknown };
+			return body.group === 'A' || body.group === 'B' || body.group === 'C' ? body.group : null;
+		} catch {
+			return null;
+		}
 	}
 
 	function beginExperiment() {
@@ -101,16 +155,91 @@
 
 	function openPuzzle() {
 		moveCount = 0;
+		const startedAt = performance.now();
+		activeAttempt = createAttempt(activePuzzle, puzzlePosition + 1, startedAt, 120000);
+		timeRemainingMs = 120000;
+		puzzleLocked = false;
 		screen = 'puzzle';
 	}
 
-	function finishPuzzle() {
+	function closeCurrentAttempt(outcome: 'solved' | 'timeout' | 'interrupted') {
+		if (!activeAttempt || puzzleLocked) return;
+		puzzleLocked = true;
+		const completed = completeAttempt(activeAttempt, outcome, performance.now(), outcome === 'solved');
+		completedAttempts = [...completedAttempts, completed];
+		void saveAttempt(completed);
+		activeAttempt = null;
 		if (puzzlePosition === 2) {
 			screen = 'complete';
 		} else {
 			puzzlePosition += 1;
 			screen = 'transition';
 		}
+	}
+
+	function recordExperimentalMovement(movement: BoardMovement) {
+		if (!activeAttempt || puzzleLocked) return;
+		const recorded = addMovement(activeAttempt, movement);
+		if (recorded) {
+			moveCount = activeAttempt.movements.length;
+			if (isSolved(activeAttempt.final_board, activePuzzle)) closeCurrentAttempt('solved');
+		}
+	}
+
+	function formatTime(milliseconds: number) {
+		const totalSeconds = Math.ceil(milliseconds / 1000);
+		return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, '0')}`;
+	}
+
+	async function saveAttempt(attempt: CompletedAttempt) {
+		deliveryStatus = 'pending';
+		await queueAttempt(attempt);
+		await flushSavedAttempts();
+	}
+
+	async function flushSavedAttempts() {
+		try {
+			const result = await flushAttemptOutbox();
+			deliveryStatus = result.pending === 0 ? 'sent' : 'pending';
+		} catch {
+			deliveryStatus = 'pending';
+		}
+	}
+
+	function escapeCsv(value: unknown) {
+		const text = typeof value === 'string' ? value : JSON.stringify(value ?? '');
+		return `"${text.replaceAll('"', '""')}"`;
+	}
+
+	function downloadCsv(filename: string, header: string[], rows: unknown[][]) {
+		const csv = [header, ...rows].map((row) => row.map(escapeCsv).join(',')).join('\n');
+		const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = filename;
+		link.click();
+		URL.revokeObjectURL(url);
+	}
+
+	async function exportPendingAttempts() {
+		const attempts = await queuedAttempts();
+		if (!attempts.length) {
+			exportMessage = 'No hay intentos pendientes en este navegador.';
+			return;
+		}
+		downloadCsv('queens-intentos-pendientes.csv', ['client_attempt_id', 'puzzle_id', 'puzzle_version', 'position', 'is_primary_outcome', 'started_at_client', 'ended_at_client', 'duration_ms', 'time_limit_ms', 'outcome', 'success', 'total_moves', 'movement_latencies_ms', 'final_board'], attempts.map((attempt) => [attempt.client_attempt_id, attempt.puzzle_id, attempt.puzzle_version, attempt.position, attempt.is_primary_outcome, attempt.started_at_client, attempt.ended_at_client, attempt.duration_ms, attempt.time_limit_ms, attempt.outcome, attempt.success, attempt.total_moves, attempt.movement_latencies_ms, attempt.final_board]));
+		exportMessage = `Se descargaron ${attempts.length} intentos pendientes.`;
+	}
+
+	async function exportPendingMovements() {
+		const attempts = await queuedAttempts();
+		const movements = attempts.flatMap((attempt) => attempt.movements.map((movement) => [attempt.client_attempt_id, movement.index, movement.type, movement.started_at_ms, movement.ended_at_ms, movement.duration_ms, movement.latency_ms, movement.changes, movement.closure]));
+		if (!movements.length) {
+			exportMessage = 'No hay movimientos pendientes en este navegador.';
+			return;
+		}
+		downloadCsv('queens-movimientos-pendientes.csv', ['client_attempt_id', 'index', 'type', 'started_at_ms', 'ended_at_ms', 'duration_ms', 'latency_ms', 'changes', 'closure'], movements);
+		exportMessage = `Se descargaron ${movements.length} movimientos pendientes.`;
 	}
 
 	function openFreePlay() {
@@ -216,6 +345,7 @@
 		<section class="panel">
 			<h2>Informacion general</h2>
 			<p>Resolveras tres tableros. Cada tarea tendra un limite de 120 segundos.</p>
+			{#if sessionRegistrationStatus === 'idle'}<p class="notice">La sesion quedo pendiente de registro en el servidor. Los intentos se conservaran localmente hasta poder enviarse.</p>{/if}
 			{#if sequence.warning}<p class="warning">{sequence.warning}</p>{/if}
 			<button onclick={() => screen = 'tutorial'}>Ver tutorial</button>
 		</section>
@@ -249,14 +379,15 @@
 		</section>
 	{:else if screen === 'puzzle'}
 		<section class="game-layout">
-			<div class="game-meta"><span>Tarea {puzzlePosition + 1} de 3</span><span>Movimientos: {moveCount}</span><span>Tiempo demo: sin limite</span></div>
-			<QueensBoard board={activePuzzle} onmove={() => moveCount += 1} />
-			<button onclick={finishPuzzle}>Finalizar tarea de demostracion</button>
+			<div class="game-meta"><span>Tarea {puzzlePosition + 1} de 3</span><span>Movimientos: {moveCount}</span><span>Tiempo restante: {formatTime(timeRemainingMs)}</span></div>
+			<QueensBoard board={activePuzzle} disabled={puzzleLocked} onmove={recordExperimentalMovement} />
+			<button onclick={() => closeCurrentAttempt('interrupted')} disabled={puzzleLocked}>Finalizar intento</button>
 		</section>
 	{:else if screen === 'complete'}
 		<section class="panel">
 			<h2>Demostracion finalizada</h2>
-			<p>En esta entrega no se envio ningun resultado. El cierre, consentimiento y explicacion final son borradores.</p>
+			<p>{deliveryStatus === 'sent' ? 'Resultados enviados.' : 'Resultados guardados localmente y pendientes de envio.'}</p>
+			<p>Se registraron {completedAttempts.length} intentos. El cierre, consentimiento y explicacion final son borradores.</p>
 			<div class="actions"><button onclick={() => screen = 'hub'}>Opciones de regreso</button>{#if isDemoAdmin}<button class="secondary" onclick={() => screen = 'settings'}>Configuracion</button>{/if}</div>
 		</section>
 	{:else if screen === 'free-play'}
@@ -275,6 +406,10 @@
 			<p>Seleccione un archivo con <code>id</code>, <code>label</code>, <code>availability</code>, <code>regions</code> y <code>queenRowsByColumn</code>. Juego libre admite matrices cuadradas; los tableros experimentales siguen siendo exclusivamente de 9 por 9.</p>
 			<input type="file" accept="application/json,.json" onchange={uploadBoard} />
 			{#if uploadMessage}<p class="upload-message">{uploadMessage}</p>{/if}
+			<h3>Respaldo local</h3>
+			<p>Descarga los registros que siguen pendientes en este navegador. Los archivos no incluyen nombre ni correo.</p>
+			<div class="actions"><button class="secondary" onclick={exportPendingAttempts}>Descargar intentos CSV</button><button class="secondary" onclick={exportPendingMovements}>Descargar movimientos CSV</button></div>
+			{#if exportMessage}<p class="upload-message">{exportMessage}</p>{/if}
 			<button onclick={() => screen = 'hub'}>Volver</button>
 		</section>
 	{/if}
