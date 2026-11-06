@@ -63,8 +63,8 @@
 			queenRowsByColumn: [0, 3, 1, 4, 2]
 		},
 		{
-			board: { id: 'tutorial-filas-columnas', label: 'Tutorial: filas y columnas', regions: [['A', 'A', 'A', 'A', 'A'], ['A', 'A', 'C', 'A', 'A'], ['A', 'A', 'A', 'A', 'A'], ['A', 'C', 'C', 'C', 'A'], ['A', 'A', 'A', 'A', 'A']] },
-			queenRowsByColumn: [undefined, 3, 1, undefined, undefined]
+			board: { id: 'tutorial-filas-columnas', label: 'Tutorial: filas y columnas', regions: [['A', 'A', 'A', 'A', 'A'], ['A', 'A', 'C', 'A', 'A'], ['B', 'B', 'B', 'B', 'B'], ['B', 'D', 'D', 'D', 'E'], ['E', 'E', 'E', 'E', 'E']] },
+			queenRowsByColumn: [0, 3, 1, 4, 2]
 		}
 	];
 
