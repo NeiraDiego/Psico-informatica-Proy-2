@@ -4,12 +4,14 @@
 	let {
 		board,
 		disabled = false,
+		showRowNumbers = false,
 		onmove,
 		cellClass,
 		initialCells
 	}: {
 		board: BoardDefinition;
 		disabled?: boolean;
+		showRowNumbers?: boolean;
 		onmove?: (movement: BoardMovement) => void;
 		cellClass?: (index: number, state: CellState) => string;
 		initialCells?: CellState[];
@@ -94,29 +96,34 @@
 	}
 </script>
 
-<div class:mini-board={size < 9} class="board" style={`--board-size: ${size}`} aria-label={board.label}>
-	{#each cells as cell, index}
-		{@const row = Math.floor(index / size)}
-		{@const column = index % size}
-		{@const regionIndex = board.regions[row][column].charCodeAt(0) - 64}
-		<button
-			type="button"
-			data-cell-index={index}
-			class={cellClass?.(index, cell)}
-			class:marked={cell === 'mark'}
-			class:queen={cell === 'queen'}
-			disabled={disabled}
-			style={`--region: ${regionIndex}`}
-			aria-label={`Fila ${row + 1}, columna ${column + 1}: ${cell === 'empty' ? 'vacía' : cell === 'mark' ? 'marca X' : 'reina'}`}
-			onpointerdown={(event) => startPointer(event, index)}
-			onpointermove={movePointer}
-			onpointerup={() => finishPointer()}
-			onpointercancel={() => finishPointer(true)}
-			onclick={() => handleClick(index)}
-		>
-			{cell === 'mark' ? 'X' : cell === 'queen' ? 'Q' : ''}
-		</button>
-	{/each}
+<div class:board-with-row-numbers={showRowNumbers} class="board-container" style={`--board-size: ${size}`}>
+	{#if showRowNumbers}
+		<div class="row-numbers" aria-hidden="true">{#each Array(size) as _, row}<span>{row + 1}</span>{/each}</div>
+	{/if}
+	<div class:mini-board={size < 9} class="board" style={`--board-size: ${size}`} aria-label={board.label}>
+		{#each cells as cell, index}
+			{@const row = Math.floor(index / size)}
+			{@const column = index % size}
+			{@const regionIndex = board.regions[row][column].charCodeAt(0) - 64}
+			<button
+				type="button"
+				data-cell-index={index}
+				class={cellClass?.(index, cell)}
+				class:marked={cell === 'mark'}
+				class:queen={cell === 'queen'}
+				disabled={disabled}
+				style={`--region: ${regionIndex}`}
+				aria-label={`Fila ${row + 1}, columna ${column + 1}: ${cell === 'empty' ? 'vacía' : cell === 'mark' ? 'marca X' : 'reina'}`}
+				onpointerdown={(event) => startPointer(event, index)}
+				onpointermove={movePointer}
+				onpointerup={() => finishPointer()}
+				onpointercancel={() => finishPointer(true)}
+				onclick={() => handleClick(index)}
+			>
+				{cell === 'mark' ? 'X' : cell === 'queen' ? 'Q' : ''}
+			</button>
+		{/each}
+	</div>
 </div>
 
 {#if size === 9}

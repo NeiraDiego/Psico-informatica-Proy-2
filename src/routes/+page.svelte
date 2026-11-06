@@ -454,7 +454,8 @@
 				<div class="actions"><button disabled={!tutorialFirstComplete} onclick={() => tutorialStep = 2}>Siguiente</button><button class="secondary" onclick={() => screen = 'hub'}>Volver al menú inicial</button></div>
 			{:else if tutorialStep === 2}
 				<h2>Descartar para encontrar una reina</h2>
-				<p>Los colores representan regiones. Debe haber una, y solo una, reina por región.</p>
+				<p>Los colores representan regiones. Debe haber una, y solo una, reina por región. Solo en este tablero trabajaremos solo con filas para simplificar la explicación.</p>
+				<p>NO debes marcar adivinando, solo usando razonamiento lógico y conclusiones de la información que ya tienes.</p>
 				<ol class="tutorial-steps">
 					<li class:completed={tutorialTwoCells[0] === 'queen'}>Marca la casilla naranja como una reina haciendo dos clics.</li>
 					{#if tutorialTwoCells[0] === 'queen'}<li class:completed={tutorialTwoProgress >= 1}>Marca la fila completa con X, ya que ya encontramos la reina de esa fila. Recuerda que puedes arrastrar para marcar en un movimiento.</li>{/if}
@@ -470,7 +471,7 @@
 					{#if tutorialThreeOrangeMarked}<li class:completed={tutorialThreeGreenQueen}>Si en una fila solo queda una casilla, esta debe ser una reina. Marca la reina verde en la segunda fila.</li>{/if}
 					{#if tutorialThreeGreenQueen}<li class:completed={tutorialThreeComplete}>Si todas las celdas de un color están en una sola fila o columna, la reina de esa fila o columna debe ser de ese color. Por lo tanto, en la fila 4 puedes marcar con X las celdas de los extremos.</li>{/if}
 				</ol>
-				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialThreeInitialCells} onmove={trackTutorialThreeMovement} />
+				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialThreeInitialCells} showRowNumbers onmove={trackTutorialThreeMovement} />
 				<div class="actions"><button disabled={!tutorialThreeComplete} onclick={() => screen = 'prepare'}>Comenzar experimento</button><button class="secondary" onclick={() => screen = 'hub'}>Volver al menú inicial</button></div>
 			{/if}
 		</section>
