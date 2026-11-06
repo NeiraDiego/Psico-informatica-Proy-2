@@ -13,7 +13,7 @@ export interface PuzzleDefinition extends BoardDefinition {
 	version: string;
 	availability: BoardAvailability;
 	status: PuzzleStatus;
-	/** Fila (1 al tamano del tablero) de la reina de cada columna, de izquierda a derecha. */
+	/** Fila (1 al tamaño del tablero) de la reina de cada columna, de izquierda a derecha. */
 	queenRowsByColumn: number[];
 }
 

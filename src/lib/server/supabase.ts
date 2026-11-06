@@ -7,7 +7,7 @@ export function supabaseConfig() {
 
 export async function supabaseRequest(path: string, init: RequestInit = {}) {
 	const config = supabaseConfig();
-	if (!config) throw new Error('Supabase no esta configurado.');
+	if (!config) throw new Error('Supabase no está configurado.');
 	return fetch(`${config.url}/rest/v1/${path}`, {
 		...init,
 		headers: {

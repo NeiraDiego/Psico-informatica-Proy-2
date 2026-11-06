@@ -107,7 +107,7 @@
 			class:queen={cell === 'queen'}
 			disabled={disabled}
 			style={`--region: ${regionIndex}`}
-			aria-label={`Fila ${row + 1}, columna ${column + 1}: ${cell === 'empty' ? 'vacia' : cell === 'mark' ? 'marca X' : 'reina'}`}
+			aria-label={`Fila ${row + 1}, columna ${column + 1}: ${cell === 'empty' ? 'vacía' : cell === 'mark' ? 'marca X' : 'reina'}`}
 			onpointerdown={(event) => startPointer(event, index)}
 			onpointermove={movePointer}
 			onpointerup={() => finishPointer()}
@@ -120,5 +120,5 @@
 </div>
 
 {#if size === 9}
-	<p class="board-help">Clic para alternar vacia, X y reina. Arrastre sobre celdas vacias para marcar X; todo el gesto cuenta como un movimiento.</p>
+	<p class="board-help">Clic para alternar vacía, X y reina. Arrastre sobre celdas vacías para marcar X; todo el gesto cuenta como un movimiento.</p>
 {/if}

@@ -17,7 +17,7 @@ export const demoSequences: Record<Group, ProtocolSequence> = {
 	C: {
 		group: 'C',
 		puzzleIds: ['queensgame-58', 'queensgame-60', 'queensgame-47'],
-		warning: 'Debido a que este experimento busca medir el desempeno despues de haber sido expuestos a tareas extremadamente dificiles, es posible que se te presenten desafios muy dificiles o incluso imposibles de resolver en el tiempo previsto. Luego de eso pueden presentarse otros de dificultad moderada.'
+		warning: 'Debido a que este experimento busca medir el desempeño después de haber sido expuestos a tareas extremadamente difíciles, es posible que se te presenten desafíos muy difíciles o incluso imposibles de resolver en el tiempo previsto. Luego de eso pueden presentarse otros de dificultad moderada.'
 	}
 };
 

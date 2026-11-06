@@ -5,7 +5,7 @@
 
 <svelte:head>
 	<title>Queens | Psicoinformatica</title>
-	<meta name="description" content="Demostracion del experimento Queens" />
+	<meta name="description" content="Experimento Queens de psicoinformática" />
 </svelte:head>
 
 {@render children()}

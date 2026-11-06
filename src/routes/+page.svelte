@@ -293,13 +293,13 @@
 			}
 			const existingIds = new Set(allPuzzles.map((puzzle) => puzzle.id));
 			if (puzzles.some((puzzle) => existingIds.has(puzzle.id)) || new Set(puzzles.map((puzzle) => puzzle.id)).size !== puzzles.length) {
-				uploadMessage = 'El catalogo contiene un identificador de tablero ya cargado o repetido.';
+				uploadMessage = 'El catálogo contiene un identificador de tablero ya cargado o repetido.';
 				return;
 			}
 			uploadedPuzzles = [...uploadedPuzzles, ...puzzles];
-			uploadMessage = `${puzzles.length} tablero(s) cargado(s) solo para esta demostracion.`;
+			uploadMessage = `${puzzles.length} tablero(s) cargado(s) para esta sesión.`;
 		} catch {
-			uploadMessage = 'El archivo debe ser JSON valido.';
+			uploadMessage = 'El archivo debe ser JSON válido.';
 		} finally {
 			input.value = '';
 		}
@@ -308,23 +308,21 @@
 
 <main>
 	<header>
-		<p class="eyebrow">Psicoinformatica · Queens</p>
-		<h1>Demostracion estructural</h1>
-		<p class="notice">Esta version usa textos, tableros y registros sinteticos. No esta habilitada para recoleccion.</p>
+		<p class="eyebrow">Psicoinformática · Queens</p>
 	</header>
 
 	{#if screen === 'register'}
 		<section class="panel">
 			<h2>Bienvenidos a este mini-experimento</h2>
 			<p>Consiste en jugar a un juego llamado Queens, disponible en varios lugares, entre ellos LinkedIn. Si ya lo conoces, por favor informa a la persona que te invito a participar.</p>
-			<h3>Explicacion</h3>
-			<p>El experimento consiste en buscar, en un tablero parecido a uno de ajedrez, nueve reinas ocultas. Se medira cuanto tiempo te demoras en encontrarlas y cuantos movimientos necesitas para hacerlo. Si no lo consigues, se medira cuantas reinas pudiste encontrar.</p>
-			<h3>Proteccion de datos</h3>
-			<p>Los datos se reportaran de forma completamente anonima. Aunque puedes optar, solo si quieres, a conocer tu lugar en el ranking de jugadores de tu grupo. No sabras los nombres de los demas ni ellos el tuyo.</p>
-			<p>Tus datos se almacenaran por el tiempo necesario para realizar los analisis y podrian utilizarse en una extension de este mismo estudio, siempre de forma anonima. Todo dato personal sera desechado en un plazo no mayor a dos anos.</p>
+			<h3>Explicación</h3>
+			<p>El experimento consiste en buscar, en un tablero parecido a uno de ajedrez, nueve reinas ocultas. Se medirá cuánto tiempo te demoras en encontrarlas y cuántos movimientos necesitas para hacerlo. Si no lo consigues, se medirá cuántas reinas pudiste encontrar.</p>
+			<h3>Protección de datos</h3>
+			<p>Los datos se reportarán de forma completamente anónima. Aunque puedes optar, solo si quieres, a conocer tu lugar en el ranking de jugadores de tu grupo. No sabrás los nombres de los demás ni ellos el tuyo.</p>
+			<p>Tus datos se almacenarán por el tiempo necesario para realizar los análisis y podrían utilizarse en una extensión de este mismo estudio, siempre de forma anónima. Todo dato personal será desechado en un plazo no mayor a dos años.</p>
 			<h3>Consentimiento</h3>
-			<p>El puntaje obtenido solo refleja el desempeno puntual y no pretende medir ningun tipo de inteligencia.</p>
-			<p>Al presionar Aceptar, informas que leiste y estas de acuerdo con lo anterior. Luego veras un pequeno tutorial y tres tableros que deberas resolver en 120 segundos.</p>
+			<p>El puntaje obtenido solo refleja el desempeño puntual y no pretende medir ningún tipo de inteligencia.</p>
+			<p>Al presionar Aceptar, informas que leíste y estás de acuerdo con lo anterior. Luego verás un pequeño tutorial y tres tableros que deberás resolver en 120 segundos.</p>
 			<form onsubmit={(event) => { event.preventDefault(); register(); }}>
 				<label>Nombre <input bind:value={name} autocomplete="name" required /></label>
 				<label>Correo <input bind:value={email} type="email" autocomplete="email" required /></label>
@@ -334,18 +332,18 @@
 	{:else if screen === 'hub'}
 		<section class="panel">
 			<h2>Bienvenida de regreso</h2>
-			<p>Puede iniciar una nueva demostracion experimental o jugar sin limite temporal. No se muestran intentos anteriores.</p>
+			<p>Puedes iniciar un nuevo experimento o jugar sin límite temporal. No se muestran intentos anteriores.</p>
 			<div class="actions">
 				<button onclick={beginExperiment}>Iniciar experimento</button>
 				<button class="secondary" onclick={openFreePlay}>Juego libre</button>
-				{#if isDemoAdmin}<button class="secondary" onclick={() => screen = 'settings'}>Configuracion</button>{/if}
+				{#if isDemoAdmin}<button class="secondary" onclick={() => screen = 'settings'}>Configuración</button>{/if}
 			</div>
 		</section>
 	{:else if screen === 'overview'}
 		<section class="panel">
-			<h2>Informacion general</h2>
-			<p>Resolveras tres tableros. Cada tarea tendra un limite de 120 segundos.</p>
-			{#if sessionRegistrationStatus === 'idle'}<p class="notice">La sesion quedo pendiente de registro en el servidor. Los intentos se conservaran localmente hasta poder enviarse.</p>{/if}
+			<h2>Información general</h2>
+			<p>Resolverás tres tableros. Cada tarea tendrá un límite de 120 segundos.</p>
+			{#if sessionRegistrationStatus === 'idle'}<p class="notice">La sesión quedó pendiente de registro en el servidor. Los intentos se conservarán localmente hasta poder enviarse.</p>{/if}
 			{#if sequence.warning}<p class="warning">{sequence.warning}</p>{/if}
 			<button onclick={() => screen = 'tutorial'}>Ver tutorial</button>
 		</section>
@@ -355,18 +353,18 @@
 			{#if tutorialStep === 1}
 				<h2>Una reina bloquea sus celdas contiguas</h2>
 				<p>Debe haber una, y solo una, reina por fila y por columna. Las reinas no pueden estar en celdas contiguas, ni siquiera en diagonal.</p>
-				<p>La reina morada ya esta indicada. Marca con X las ocho celdas que la rodean y luego arrastra para practicar el gesto de marcado.</p>
+				<p>La reina morada ya está indicada. Marca con X las ocho celdas que la rodean y luego arrastra para practicar el gesto de marcado.</p>
 				<QueensBoard board={tutorialBoards[0].board} initialCells={tutorialInitialStates[0]} cellClass={tutorialCellClass} onmove={trackTutorialFirstMovement} />
-				{#if tutorialMarkedNeighbors.length === 8 && !tutorialDragComplete}<p>Ahora arrastra con el dedo o mouse sobre celdas vacias para practicar el gesto de marcado.</p>{/if}
+				{#if tutorialMarkedNeighbors.length === 8 && !tutorialDragComplete}<p>Ahora arrastra con el dedo o mouse sobre celdas vacías para practicar el gesto de marcado.</p>{/if}
 				<button disabled={!tutorialFirstComplete} onclick={() => tutorialStep = 2}>Siguiente</button>
 			{:else if tutorialStep === 2}
 				<h2>Descartar para encontrar una reina</h2>
-				<p>Los colores representan regiones. Observa como las cinco reinas indicadas ocupan filas, columnas y regiones diferentes, sin tocarse entre si.</p>
+				<p>Los colores representan regiones. Observa cómo las cinco reinas indicadas ocupan filas, columnas y regiones diferentes, sin tocarse entre sí.</p>
 				<QueensBoard board={tutorialBoards[1].board} initialCells={tutorialInitialStates[1]} disabled />
 				<button onclick={() => tutorialStep = 3}>Siguiente</button>
 			{:else}
 				<h2>Una reina por fila y columna</h2>
-				<p>Las referencias moradas muestran celdas que debes considerar al descartar opciones por fila, columna, region y contacto diagonal. Una referencia parcial no es una solucion completa.</p>
+				<p>Las referencias moradas muestran celdas que debes considerar al descartar opciones por fila, columna, región y contacto diagonal. Una referencia parcial no es una solución completa.</p>
 				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialInitialStates[2]} disabled />
 				<button onclick={() => screen = 'prepare'}>Finalizar tutorial</button>
 			{/if}
@@ -374,7 +372,7 @@
 	{:else if screen === 'prepare' || screen === 'transition'}
 		<section class="panel">
 			<h2>Preparacion de tarea</h2>
-			<p>El tablero esta cargado. El temporizador no empezara hasta pulsar iniciar.</p>
+			<p>El tablero está cargado. El temporizador no empezará hasta pulsar Iniciar.</p>
 			<button onclick={openPuzzle}>Iniciar tarea {puzzlePosition + 1}</button>
 		</section>
 	{:else if screen === 'puzzle'}
@@ -385,21 +383,21 @@
 		</section>
 	{:else if screen === 'complete'}
 		<section class="panel">
-			<h2>Demostracion finalizada</h2>
-			<p>{deliveryStatus === 'sent' ? 'Resultados enviados.' : 'Resultados guardados localmente y pendientes de envio.'}</p>
-			<p>Se registraron {completedAttempts.length} intentos. El cierre, consentimiento y explicacion final son borradores.</p>
-			<div class="actions"><button onclick={() => screen = 'hub'}>Opciones de regreso</button>{#if isDemoAdmin}<button class="secondary" onclick={() => screen = 'settings'}>Configuracion</button>{/if}</div>
+			<h2>Experimento finalizado</h2>
+			<p>{deliveryStatus === 'sent' ? 'Resultados enviados.' : 'Resultados guardados localmente y pendientes de envío.'}</p>
+			<p>Se registraron {completedAttempts.length} intentos. El cierre, consentimiento y explicación final son borradores.</p>
+			<div class="actions"><button onclick={() => screen = 'hub'}>Opciones de regreso</button>{#if isDemoAdmin}<button class="secondary" onclick={() => screen = 'settings'}>Configuración</button>{/if}</div>
 		</section>
 	{:else if screen === 'free-play'}
 		<section class="game-layout">
-			<div class="game-meta"><span>Juego libre</span><span>Movimientos: {freeMoves}</span><span>Sin limite temporal</span></div>
+			<div class="game-meta"><span>Juego libre</span><span>Movimientos: {freeMoves}</span><span>Sin límite temporal</span></div>
 			<QueensBoard board={freePuzzle} onmove={() => freeMoves += 1} />
 			<button onclick={stopFreePlay}>Terminar juego libre</button>
 		</section>
 	{:else if screen === 'settings'}
 		<section class="panel">
-			<h2>Configuracion de demostracion</h2>
-			<p>Vista reservada al correo autorizado. La autorizacion real se resolvera en servidor mediante <code>ADMIN_EMAILS</code>. Los cambios de esta pantalla solo viven mientras esta pagina permanezca abierta.</p>
+			<h2>Configuración</h2>
+			<p>Vista reservada al correo autorizado. La autorización real se resolverá en servidor mediante <code>ADMIN_EMAILS</code>. Los cambios de esta pantalla solo viven mientras esta página permanezca abierta.</p>
 			<h3>Tableros publicados</h3>
 			<ul>{#each allPuzzles as puzzle}<li>{puzzle.label}: {puzzle.availability}, {puzzle.status}</li>{/each}</ul>
 			<h3>Subir tablero JSON</h3>

@@ -12,15 +12,15 @@ function chooseGroup() {
 
 export async function POST({ request, cookies }) {
 	const body: unknown = await request.json().catch(() => null);
-	if (!body || typeof body !== 'object') return json({ error: 'Cuerpo JSON invalido.' }, { status: 400 });
+	if (!body || typeof body !== 'object') return json({ error: 'Cuerpo JSON inválido.' }, { status: 400 });
 	const { name, email, idempotency_key } = body as Record<string, unknown>;
-	if (typeof name !== 'string' || !name.trim() || name.length > 200) return json({ error: 'Nombre invalido.' }, { status: 400 });
-	if (typeof email !== 'string' || !/^\S+@\S+\.\S+$/.test(email) || email.length > 320) return json({ error: 'Correo invalido.' }, { status: 400 });
-	if (typeof idempotency_key !== 'string' || !/^[a-f0-9-]{36}$/i.test(idempotency_key)) return json({ error: 'Clave de idempotencia invalida.' }, { status: 400 });
+	if (typeof name !== 'string' || !name.trim() || name.length > 200) return json({ error: 'Nombre inválido.' }, { status: 400 });
+	if (typeof email !== 'string' || !/^\S+@\S+\.\S+$/.test(email) || email.length > 320) return json({ error: 'Correo inválido.' }, { status: 400 });
+	if (typeof idempotency_key !== 'string' || !/^[a-f0-9-]{36}$/i.test(idempotency_key)) return json({ error: 'Clave de idempotencia inválida.' }, { status: 400 });
 	if (!supabaseConfig()) return json({ error: 'Persistencia no configurada.' }, { status: 503 });
 
 	const existing = await supabaseRequest(`sessions?select=id,group&idempotency_key=eq.${encodeURIComponent(idempotency_key)}`);
-	if (!existing.ok) return json({ error: 'No se pudo consultar la sesion.' }, { status: 502 });
+	if (!existing.ok) return json({ error: 'No se pudo consultar la sesión.' }, { status: 502 });
 	const sessions = await existing.json() as Array<{ id: string; group: 'A' | 'B' | 'C' }>;
 	if (sessions[0]) return json({ group: sessions[0].group, reused: true });
 
@@ -46,7 +46,7 @@ export async function POST({ request, cookies }) {
 			access_token_hash: hashToken(token)
 		})
 	});
-	if (!sessionResponse.ok) return json({ error: 'No se pudo crear la sesion.' }, { status: 502 });
+	if (!sessionResponse.ok) return json({ error: 'No se pudo crear la sesión.' }, { status: 502 });
 	cookies.set('queens_session_token', token, { path: '/', httpOnly: true, sameSite: 'lax', secure: !import.meta.env.DEV, maxAge: 60 * 60 * 24 * 14 });
 	return json({ group, reused: false }, { status: 201 });
 }

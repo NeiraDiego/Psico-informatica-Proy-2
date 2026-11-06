@@ -28,7 +28,7 @@ function findSolution(regions) {
 		return false;
 	}
 
-	if (!place(0)) throw new Error('El tablero no tiene solucion con las reglas Queens.');
+	if (!place(0)) throw new Error('El tablero no tiene solución con las reglas Queens.');
 	return rowsByColumn.map((row) => row + 1);
 }
 

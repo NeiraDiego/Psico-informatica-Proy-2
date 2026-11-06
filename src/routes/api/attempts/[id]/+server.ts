@@ -8,21 +8,21 @@ function hashToken(token: string) {
 
 export async function PUT({ request, params, cookies }) {
 	const body: unknown = await request.json().catch(() => null);
-	if (!body || typeof body !== 'object') return json({ error: 'Cuerpo JSON invalido.' }, { status: 400 });
+	if (!body || typeof body !== 'object') return json({ error: 'Cuerpo JSON inválido.' }, { status: 400 });
 	const attempt = body as Record<string, unknown>;
 	if (attempt.client_attempt_id !== params.id || typeof attempt.puzzle_id !== 'string' || typeof attempt.puzzle_version !== 'string') {
-		return json({ error: 'Identificador de intento o puzle invalido.' }, { status: 400 });
+		return json({ error: 'Identificador de intento o puzle inválido.' }, { status: 400 });
 	}
-	if (!Number.isInteger(attempt.position) || (attempt.position as number) < 1 || (attempt.position as number) > 3) return json({ error: 'Posicion invalida.' }, { status: 400 });
-	if (!Number.isInteger(attempt.duration_ms) || (attempt.duration_ms as number) < 0 || (attempt.duration_ms as number) > 120500) return json({ error: 'Duracion invalida.' }, { status: 400 });
-	if (!Array.isArray(attempt.movements) || !Array.isArray(attempt.final_board)) return json({ error: 'Movimientos o tablero final invalidos.' }, { status: 400 });
+	if (!Number.isInteger(attempt.position) || (attempt.position as number) < 1 || (attempt.position as number) > 3) return json({ error: 'Posición inválida.' }, { status: 400 });
+	if (!Number.isInteger(attempt.duration_ms) || (attempt.duration_ms as number) < 0 || (attempt.duration_ms as number) > 120500) return json({ error: 'Duración inválida.' }, { status: 400 });
+	if (!Array.isArray(attempt.movements) || !Array.isArray(attempt.final_board)) return json({ error: 'Movimientos o tablero final inválidos.' }, { status: 400 });
 	if (!supabaseConfig()) return json({ error: 'Persistencia no configurada.' }, { status: 503 });
 	const token = cookies.get('queens_session_token');
-	if (!token) return json({ error: 'Sesion no autorizada.' }, { status: 401 });
+	if (!token) return json({ error: 'Sesión no autorizada.' }, { status: 401 });
 	const sessionResponse = await supabaseRequest(`sessions?select=id&access_token_hash=eq.${hashToken(token)}`);
-	if (!sessionResponse.ok) return json({ error: 'No se pudo autorizar la sesion.' }, { status: 502 });
+	if (!sessionResponse.ok) return json({ error: 'No se pudo autorizar la sesión.' }, { status: 502 });
 	const [session] = await sessionResponse.json() as Array<{ id: string }>;
-	if (!session) return json({ error: 'Sesion no autorizada.' }, { status: 401 });
+	if (!session) return json({ error: 'Sesión no autorizada.' }, { status: 401 });
 
 	const attemptResponse = await supabaseRequest('puzzle_attempts?on_conflict=client_attempt_id', {
 		method: 'POST',
@@ -58,7 +58,7 @@ export async function PUT({ request, params, cookies }) {
 			headers: { prefer: 'resolution=merge-duplicates' },
 			body: JSON.stringify(movements)
 		});
-		if (!movementResponse.ok) return json({ error: 'El intento se guardo, pero no sus movimientos.' }, { status: 502 });
+		if (!movementResponse.ok) return json({ error: 'El intento se guardó, pero no sus movimientos.' }, { status: 502 });
 	}
 	return json({ accepted: true });
 }

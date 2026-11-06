@@ -1,10 +1,10 @@
-# Queens: Psicoinformatica Proyecto 2
+# Queens: Psicoinformática Proyecto 2
 
-Aplicacion SvelteKit para el experimento Queens. La interfaz y el almacenamiento local estan implementados, pero **no debe iniciarse recoleccion real** hasta aprobar protocolo, textos, tableros y configurar Supabase.
+Aplicación SvelteKit para el experimento Queens. La interfaz y el almacenamiento local están implementados, pero **no debe iniciarse recolección real** hasta aprobar protocolo, textos, tableros y configurar Supabase.
 
 ## Ejecutar
 
-Requiere Node.js 26 o una version compatible con las dependencias declaradas.
+Requiere Node.js 26 o una versión compatible con las dependencias declaradas.
 
 ```bash
 npm install
@@ -18,49 +18,49 @@ npm run check
 npm run build
 ```
 
-## Probar la demostracion
+## Probar la aplicación
 
 1. Ingrese un nombre y un correo de prueba.
-2. Recorra la informacion, el tutorial y las tres tareas sinteticas.
-3. Finalice la demostracion para acceder a las opciones de regreso.
-4. Vuelva a ingresar con el mismo correo en este navegador para ver el acceso a juego libre.
-5. Para ver Configuracion, use `diegoneira@gmail.com` como correo de demostracion.
+2. Recorra la información, el tutorial y las tres tareas.
+3. Finalice el experimento para acceder a las opciones de regreso.
+4. Vuelva a ingresar con el mismo correo en este navegador para ver el acceso a Juego libre.
+5. Para ver Configuración, use `diegoneira@gmail.com` como correo autorizado.
 
-El reconocimiento de regreso se guarda solo en `localStorage` y contiene unicamente la lista de correos de prueba. Es una sustitucion temporal de la persistencia de sesiones; no representa el comportamiento final ni debe usarse con datos personales reales.
+El reconocimiento de regreso se guarda solo en `localStorage` y contiene únicamente la lista de correos de prueba. Es una sustitución temporal de la persistencia de sesiones; no representa el comportamiento final ni debe usarse con datos personales reales.
 
 ## Estructura
 
 | Ruta | Responsabilidad |
 | --- | --- |
 | `src/lib/domain` | Tipos estables del protocolo, tableros y celdas. |
-| `src/lib/protocol/demo.ts` | Secuencias A/B/C, tableros y correo administrativo exclusivamente sintéticos. |
-| `src/lib/components/QueensBoard.svelte` | Presentacion del tablero y ciclo de clic de demostracion. |
-| `src/routes/+page.svelte` | Flujo de pantallas local; no asigna ni persiste grupos reales. |
+| `src/lib/protocol/demo.ts` | Secuencias A/B/C, tableros y correo administrativo configurado. |
+| `src/lib/components/QueensBoard.svelte` | Presentación del tablero y ciclo de clic. |
+| `src/routes/+page.svelte` | Flujo de pantallas del experimento. |
 | `src/styles.css` | Estilos de la interfaz. |
 | `.env.example` | Forma prevista de declarar correos autorizados en servidor. |
 
 `QueensBoard` admite cualquier matriz cuadrada de regiones y se reutiliza en el tutorial 5x5. La carga de juego libre acepta cualquier tablero cuadrado; la carga de tableros experimentales permanece deliberadamente restringida a 9x9 por el protocolo.
 
-## Modo libre y configuracion
+## Modo libre y configuración
 
 - Una persona que vuelve con el mismo correo puede abrir **Juego libre**, que escoge aleatoriamente uno de los diez tableros del catálogo y no limita el tiempo. Sus movimientos no se guardan todavía.
-- Tras completar la demostracion aparecen las mismas opciones de regreso.
-- **Configuracion** se muestra solo para el correo sintético indicado arriba. La version definitiva consultara `ADMIN_EMAILS` exclusivamente en el servidor. La coincidencia de correo sin verificacion no es autenticacion robusta y no debe dar acceso a historiales ni datos de participantes.
-- La configuracion todavia no persiste ni publica cambios. La carga definitiva validara matriz 9x9, nueve regiones, conectividad y soluciones, y publicara versiones nuevas sin alterar sesiones historicas.
+- Tras completar el experimento aparecen las mismas opciones de regreso.
+- **Configuración** se muestra solo para el correo autorizado indicado arriba. La versión definitiva consultará `ADMIN_EMAILS` exclusivamente en el servidor. La coincidencia de correo sin verificación no es autenticación robusta y no debe dar acceso a historiales ni datos de participantes.
+- La configuración todavía no persiste ni publica cambios. La carga definitiva validará matriz 9x9, nueve regiones, conectividad y soluciones, y publicará versiones nuevas sin alterar sesiones históricas.
 
-## Medicion y envio
+## Medición y envío
 
-- Cada puzle experimental inicia un reloj monotono de 120 segundos al pulsar `Iniciar tarea`. El valor mostrado se deriva del instante limite, por lo que no depende de descontar ticks.
-- Por movimiento se conserva indice, tipo, inicio y fin relativos, duracion, latencia, cambios de celdas y cierre normal o cancelado. La lista `movement_latencies_ms` se deriva de esos eventos.
-- Los intentos terminados se guardan primero en IndexedDB y se reintentan al recuperar conexion. La aplicacion solo muestra `Resultados enviados` cuando `PUT /api/attempts/{id}` responde correctamente.
-- Sin Supabase configurado, la sesion y los intentos quedan pendientes localmente. No se simula una confirmacion de envio.
-- En Configuracion, los botones de respaldo descargan dos CSV de la cola pendiente: intentos y movimientos. No incluyen nombre ni correo, y solo contienen los registros almacenados en el navegador actual.
+- Cada puzle experimental inicia un reloj monótono de 120 segundos al pulsar `Iniciar tarea`. El valor mostrado se deriva del instante límite, por lo que no depende de descontar ticks.
+- Por movimiento se conserva índice, tipo, inicio y fin relativos, duración, latencia, cambios de celdas y cierre normal o cancelado. La lista `movement_latencies_ms` se deriva de esos eventos.
+- Los intentos terminados se guardan primero en IndexedDB y se reintentan al recuperar conexión. La aplicación solo muestra `Resultados enviados` cuando `PUT /api/attempts/{id}` responde correctamente.
+- Sin Supabase configurado, la sesión y los intentos quedan pendientes localmente. No se simula una confirmación de envío.
+- En Configuración, los botones de respaldo descargan dos CSV de la cola pendiente: intentos y movimientos. No incluyen nombre ni correo, y solo contienen los registros almacenados en el navegador actual.
 
-Para habilitar el backend, copie `.env.example` a `.env` y configure `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` solo en el entorno de servidor. Aplique antes la migracion `supabase/migrations/202611060001_initial.sql`. La clave de servicio no se expone al navegador.
+Para habilitar el backend, copie `.env.example` a `.env` y configure `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` solo en el entorno de servidor. Aplique antes la migración `supabase/migrations/202611060001_initial.sql`. La clave de servicio no se expone al navegador.
 
-Actualmente Configuracion permite cargar un JSON **solo durante la pagina abierta** para probar un tablero en juego libre. Puede ser un tablero individual o un catalogo cuyo objeto raiz contiene `boards`. El archivo `data/queensgame-9x9.json` es un catalogo listo para cargar. Cada tablero debe contener `regions`, una matriz cuadrada de letras mayusculas; cada letra representa una region y debe formar una zona conexa por sus lados. Debe haber tantas regiones como filas. `queenRowsByColumn` es una lista con una entrada por columna, de izquierda a derecha, que indica la fila donde se ubica la reina de la solucion declarada.
+Actualmente Configuración permite cargar un JSON **solo durante la página abierta** para probar un tablero en Juego libre. Puede ser un tablero individual o un catálogo cuyo objeto raíz contiene `boards`. El archivo `data/queensgame-9x9.json` es un catálogo listo para cargar. Cada tablero debe contener `regions`, una matriz cuadrada de letras mayúsculas; cada letra representa una región y debe formar una zona conexa por sus lados. Debe haber tantas regiones como filas. `queenRowsByColumn` es una lista con una entrada por columna, de izquierda a derecha, que indica la fila donde se ubica la reina de la solución declarada.
 
-Los tableros marcados como `experimental` o `both` deben ser 9x9 y usar las regiones `A` a `I`. Los tableros solo de `free_play` pueden tener otro tamano cuadrado y usar letras hasta `Z`:
+Los tableros marcados como `experimental` o `both` deben ser 9x9 y usar las regiones `A` a `I`. Los tableros solo de `free_play` pueden tener otro tamaño cuadrado y usar letras hasta `Z`:
 
 ```json
 {
@@ -72,7 +72,7 @@ Los tableros marcados como `experimental` o `both` deben ser 9x9 y usar las regi
 }
 ```
 
-`availability` admite `experimental`, `free_play` o `both`. La carga comprueba que las posiciones declaradas no compartan fila ni region y que no haya reinas adyacentes. La persistencia y un solver independiente que cuente soluciones se implementaran junto con Supabase.
+`availability` admite `experimental`, `free_play` o `both`. La carga comprueba que las posiciones declaradas no compartan fila ni región y que no haya reinas adyacentes. La persistencia y un solver independiente que cuente soluciones se implementarán junto con Supabase.
 
 ## Convertir mapas de origen
 
@@ -82,15 +82,6 @@ Los diez mapas suministrados en `../diez_mapas_9x9.json` se convirtieron a `data
 npm run boards:convert
 ```
 
-El conversor traduce regiones numericas `0..8` a `A..I`, conserva identificador y URL de origen, y calcula una solucion válida por búsqueda exhaustiva con las reglas de filas, columnas, regiones y adyacencia.
+El conversor traduce regiones numéricas `0..8` a `A..I`, conserva identificador y URL de origen, y calcula una solución válida por búsqueda exhaustiva con las reglas de filas, columnas, regiones y adyacencia.
 
 La secuencia provisional usa mapas del catálogo: A recibe niveles 16, 22 y 47; B/C reciben 58, 60 y 47. Por tanto, el tercer tablero es el mismo para los tres grupos. Esta secuencia y las etiquetas de dificultad siguen sujetas a aprobación del investigador.
-
-## Decisiones pendientes antes de recoleccion
-
-- Aprobar textos de consentimiento, retirada, proteccion de datos, cierre explicativo y advertencia de grupo C.
-- Definir los tableros reales, su estado de solucion y su validacion independiente.
-- Confirmar la secuencia final del grupo A y el significado operativo del segundo tablero de B/C.
-- Definir poblacion, criterios, muestra, plan analitico y politica de dispositivos e interrupciones.
-- Implementar API, Supabase con RLS, cookies seguras, cola IndexedDB, validacion de servidor y exportaciones privadas.
-- Implementar reglas completas, gestos de arrastre, reloj monotono de 120 segundos y pruebas del protocolo.
