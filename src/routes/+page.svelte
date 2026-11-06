@@ -408,7 +408,7 @@
 			<h2>Bienvenidos a este mini-experimento</h2>
 			<p>Consiste en jugar a un juego llamado Queens, disponible en varios lugares, entre ellos LinkedIn. Si ya lo conoces, por favor informa a la persona que te invito a participar.</p>
 			<h3>Explicación</h3>
-			<p>El experimento consiste en buscar, en un tablero parecido a uno de ajedrez, nueve reinas ocultas. Se medirá cuánto tiempo te demoras en encontrarlas y cuántos movimientos necesitas para hacerlo. Si no lo consigues, se medirá cuántas reinas pudiste encontrar.</p>
+			<p>El experimento consiste en buscar, en un tablero parecido a uno de ajedrez, reinas ocultas. Se medirá cuánto tiempo te demoras en encontrarlas y cuántos movimientos necesitas para hacerlo. Si no lo consigues, se medirá cuántas reinas pudiste encontrar.</p>
 			<h3>Protección de datos</h3>
 			<p>Los datos se reportarán de forma completamente anónima. Aunque puedes optar, solo si quieres, a conocer tu lugar en el ranking de jugadores de tu grupo. No sabrás los nombres de los demás ni ellos el tuyo.</p>
 			<p>Tus datos se almacenarán por el tiempo necesario para realizar los análisis y podrían utilizarse en una extensión de este mismo estudio, siempre de forma anónima. Todo dato personal será desechado en un plazo no mayor a dos años.</p>
@@ -416,8 +416,8 @@
 			<p>El puntaje obtenido solo refleja el desempeño puntual y no pretende medir ningún tipo de inteligencia.</p>
 			<p>Al presionar Aceptar, informas que leíste y estás de acuerdo con lo anterior. Luego verás un pequeño tutorial y tres tableros que deberás resolver en 120 segundos.</p>
 			<form onsubmit={(event) => { event.preventDefault(); register(); }}>
-				<label>Nombre del experimentador <input bind:value={name} autocomplete="name" required /></label>
-				<label>Correo electrónico del experimentador <input bind:value={email} type="email" autocomplete="email" required /></label>
+				<label>Nombre <input bind:value={name} autocomplete="name" required /></label>
+				<label>Correo electrónico <input bind:value={email} type="email" autocomplete="email" required /></label>
 				<button>Aceptar y continuar</button>
 			</form>
 		</section>
