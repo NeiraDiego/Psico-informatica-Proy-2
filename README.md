@@ -46,18 +46,19 @@ El reconocimiento de regreso se guarda solo en `localStorage` y contiene unicame
 - **Configuracion** se muestra solo para el correo sintético indicado arriba. La version definitiva consultara `ADMIN_EMAILS` exclusivamente en el servidor. La coincidencia de correo sin verificacion no es autenticacion robusta y no debe dar acceso a historiales ni datos de participantes.
 - La configuracion todavia no persiste ni publica cambios. La carga definitiva validara matriz 9x9, nueve regiones, conectividad y soluciones, y publicara versiones nuevas sin alterar sesiones historicas.
 
-Actualmente Configuracion permite cargar un JSON **solo durante la pagina abierta** para probar un tablero en juego libre. El archivo debe tener este formato; `regions` debe contener nueve filas de nueve enteros y cada identificador debe formar una region conexa por sus lados:
+Actualmente Configuracion permite cargar un JSON **solo durante la pagina abierta** para probar un tablero en juego libre. El archivo debe contener `regions`, una matriz de nueve filas de nueve letras entre `A` e `I`; cada letra representa una region y debe formar una zona conexa por sus lados. `queenRowsByColumn` es una lista de nueve filas, una para cada columna de izquierda a derecha, que indica la fila (de 1 a 9) donde se ubica la reina de la solucion declarada:
 
 ```json
 {
   "id": "tablero-prueba-01",
   "label": "Tablero de prueba",
   "availability": "both",
-  "regions": [[1, 1, 1, 1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3, 3, 3, 3], [4, 4, 4, 4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6, 6, 6, 6], [7, 7, 7, 7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9, 9, 9, 9]]
+  "regions": [["A", "A", "A", "A", "A", "A", "A", "A", "A"], ["B", "B", "B", "B", "B", "B", "B", "B", "B"], ["C", "C", "C", "C", "C", "C", "C", "C", "C"], ["D", "D", "D", "D", "D", "D", "D", "D", "D"], ["E", "E", "E", "E", "E", "E", "E", "E", "E"], ["F", "F", "F", "F", "F", "F", "F", "F", "F"], ["G", "G", "G", "G", "G", "G", "G", "G", "G"], ["H", "H", "H", "H", "H", "H", "H", "H", "H"], ["I", "I", "I", "I", "I", "I", "I", "I", "I"]],
+  "queenRowsByColumn": [1, 3, 5, 7, 9, 2, 4, 6, 8]
 }
 ```
 
-`availability` admite `experimental`, `free_play` o `both`. La carga persistente y la validacion de soluciones se implementaran junto con Supabase.
+`availability` admite `experimental`, `free_play` o `both`. La carga comprueba que las posiciones declaradas no compartan fila ni region y que no haya reinas adyacentes. La persistencia y un solver independiente que cuente soluciones se implementaran junto con Supabase.
 
 ## Decisiones pendientes antes de recoleccion
 

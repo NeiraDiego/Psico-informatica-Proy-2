@@ -9,7 +9,9 @@ export interface PuzzleDefinition {
 	label: string;
 	availability: BoardAvailability;
 	status: PuzzleStatus;
-	regions: number[][];
+	regions: string[][];
+	/** Fila (1 a 9) de la reina de cada columna, de izquierda a derecha. */
+	queenRowsByColumn: number[];
 }
 
 export interface ProtocolSequence {

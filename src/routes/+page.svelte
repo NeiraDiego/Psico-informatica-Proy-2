@@ -198,7 +198,7 @@
 			<h3>Tableros publicados</h3>
 			<ul>{#each allPuzzles as puzzle}<li>{puzzle.label}: {puzzle.availability}, {puzzle.status}</li>{/each}</ul>
 			<h3>Subir tablero JSON</h3>
-			<p>Seleccione un archivo con <code>id</code>, <code>label</code>, <code>availability</code> y una matriz <code>regions</code> de 9 por 9. Se comprueban nueve regiones conexas.</p>
+			<p>Seleccione un archivo con <code>id</code>, <code>label</code>, <code>availability</code>, <code>regions</code> y <code>queenRowsByColumn</code>. Se comprueban nueve regiones A-I conexas y una posicion valida para las nueve reinas.</p>
 			<input type="file" accept="application/json,.json" onchange={uploadBoard} />
 			{#if uploadMessage}<p class="upload-message">{uploadMessage}</p>{/if}
 			<button onclick={() => screen = 'hub'}>Volver</button>

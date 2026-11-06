@@ -82,13 +82,14 @@
 	{#each cells as cell, index}
 		{@const row = Math.floor(index / 9)}
 		{@const column = index % 9}
+		{@const regionIndex = puzzle.regions[row][column].charCodeAt(0) - 64}
 		<button
 			type="button"
 			data-cell-index={index}
 			class:marked={cell === 'mark'}
 			class:queen={cell === 'queen'}
 			disabled={disabled}
-			style={`--region: ${puzzle.regions[row][column]}`}
+			style={`--region: ${regionIndex}`}
 			aria-label={`Fila ${row + 1}, columna ${column + 1}: ${cell === 'empty' ? 'vacia' : cell === 'mark' ? 'marca X' : 'reina'}`}
 			onpointerdown={(event) => startPointer(event, index)}
 			onpointermove={movePointer}

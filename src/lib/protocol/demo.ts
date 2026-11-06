@@ -1,6 +1,7 @@
 import type { Group, ProtocolSequence, PuzzleDefinition } from '$lib/domain/types';
 
-const rowRegions = Array.from({ length: 9 }, (_, row) => Array.from({ length: 9 }, () => row + 1));
+const rowRegions = Array.from({ length: 9 }, (_, row) => Array.from({ length: 9 }, () => String.fromCharCode(65 + row)));
+const demoSolution = [1, 3, 5, 7, 9, 2, 4, 6, 8];
 
 export const demoPuzzles: PuzzleDefinition[] = [
 	{
@@ -9,7 +10,8 @@ export const demoPuzzles: PuzzleDefinition[] = [
 		label: 'Tablero de demostracion 1',
 		availability: 'experimental',
 		status: 'pending_validation',
-		regions: rowRegions
+		regions: rowRegions,
+		queenRowsByColumn: demoSolution
 	},
 	{
 		id: 'demo-challenge',
@@ -17,7 +19,8 @@ export const demoPuzzles: PuzzleDefinition[] = [
 		label: 'Tablero de demostracion 2',
 		availability: 'both',
 		status: 'pending_validation',
-		regions: rowRegions
+		regions: rowRegions,
+		queenRowsByColumn: demoSolution
 	},
 	{
 		id: 'demo-common',
@@ -25,7 +28,8 @@ export const demoPuzzles: PuzzleDefinition[] = [
 		label: 'Tablero comun de demostracion',
 		availability: 'both',
 		status: 'pending_validation',
-		regions: rowRegions
+		regions: rowRegions,
+		queenRowsByColumn: demoSolution
 	}
 ];
 
