@@ -185,6 +185,14 @@
 		screen = 'overview';
 	}
 
+	function changeUser() {
+		name = '';
+		email = '';
+		returning = false;
+		sessionRegistrationStatus = 'idle';
+		screen = 'register';
+	}
+
 	function openPuzzle() {
 		moveCount = 0;
 		const startedAt = performance.now();
@@ -420,6 +428,7 @@
 			<div class="actions">
 				<button onclick={beginExperiment}>Iniciar experimento</button>
 				<button class="secondary" onclick={() => openFreePlay()}>Juego libre</button>
+				<button class="secondary" onclick={changeUser}>Cambiar de usuario</button>
 				{#if isDemoAdmin}<button class="secondary" onclick={() => screen = 'settings'}>Configuración</button>{/if}
 			</div>
 		</section>
