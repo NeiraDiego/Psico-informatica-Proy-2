@@ -41,7 +41,7 @@ El reconocimiento de regreso se guarda solo en `localStorage` y contiene unicame
 
 ## Modo libre y configuracion
 
-- Una persona que vuelve con el mismo correo puede abrir **Juego libre**, que escoge aleatoriamente un tablero marcado como disponible y no limita el tiempo. Sus movimientos no se guardan todavía.
+- Una persona que vuelve con el mismo correo puede abrir **Juego libre**, que escoge aleatoriamente uno de los diez tableros del catálogo y no limita el tiempo. Sus movimientos no se guardan todavía.
 - Tras completar la demostracion aparecen las mismas opciones de regreso.
 - **Configuracion** se muestra solo para el correo sintético indicado arriba. La version definitiva consultara `ADMIN_EMAILS` exclusivamente en el servidor. La coincidencia de correo sin verificacion no es autenticacion robusta y no debe dar acceso a historiales ni datos de participantes.
 - La configuracion todavia no persiste ni publica cambios. La carga definitiva validara matriz 9x9, nueve regiones, conectividad y soluciones, y publicara versiones nuevas sin alterar sesiones historicas.
@@ -69,6 +69,8 @@ npm run boards:convert
 ```
 
 El conversor traduce regiones numericas `0..8` a `A..I`, conserva identificador y URL de origen, y calcula una solucion válida por búsqueda exhaustiva con las reglas de filas, columnas, regiones y adyacencia.
+
+La secuencia provisional usa mapas del catálogo: A recibe niveles 16, 22 y 47; B/C reciben 58, 60 y 47. Por tanto, el tercer tablero es el mismo para los tres grupos. Esta secuencia y las etiquetas de dificultad siguen sujetas a aprobación del investigador.
 
 ## Decisiones pendientes antes de recoleccion
 

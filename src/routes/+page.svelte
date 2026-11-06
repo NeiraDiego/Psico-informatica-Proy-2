@@ -13,8 +13,13 @@
 	let returning = $state(false);
 	let group = $state<Group>('A');
 	let puzzlePosition = $state(0);
-	let tutorialQueen = $state(false);
-	let tutorialMark = $state(false);
+	let tutorialStep = $state(1);
+	let tutorialCenterClicks = $state(0);
+	let tutorialMarkedNeighbors = $state<number[]>([]);
+	let tutorialDragStart = $state<{ x: number; y: number } | null>(null);
+	let tutorialDragComplete = $state(false);
+	let tutorialCandidate = $state(false);
+	let tutorialDeduction = $state(false);
 	let moveCount = $state(0);
 	let freePuzzle = $state<PuzzleDefinition>(demoPuzzles[1]);
 	let freeStartedAt = $state(0);
@@ -27,6 +32,7 @@
 	const allPuzzles = $derived([...demoPuzzles, ...uploadedPuzzles]);
 	const sequence = $derived(demoSequences[group]);
 	const activePuzzle = $derived(getPuzzle(sequence.puzzleIds[puzzlePosition]));
+	const tutorialFirstComplete = $derived(tutorialCenterClicks === 2 && tutorialMarkedNeighbors.length === 8 && tutorialDragComplete);
 
 	onMount(() => {
 		const stored = localStorage.getItem('queens-demo-emails');
@@ -66,8 +72,12 @@
 		group = pickDemoGroup();
 		puzzlePosition = 0;
 		moveCount = 0;
-		tutorialQueen = false;
-		tutorialMark = false;
+		tutorialStep = 1;
+		tutorialCenterClicks = 0;
+		tutorialMarkedNeighbors = [];
+		tutorialDragComplete = false;
+		tutorialCandidate = false;
+		tutorialDeduction = false;
 		screen = 'overview';
 	}
 
@@ -97,6 +107,40 @@
 	function stopFreePlay() {
 		elapsedMs = Math.round(performance.now() - freeStartedAt);
 		screen = 'hub';
+	}
+
+	function tutorialCellClass(index: number) {
+		if (index === 12) return 'tutorial-queen';
+		if ([6, 7, 8, 11, 13, 16, 17, 18].includes(index)) return tutorialMarkedNeighbors.includes(index) ? 'tutorial-marked' : 'tutorial-neighbor';
+		if (tutorialDragComplete && (Math.floor(index / 5) === 2 || index % 5 === 2)) return 'tutorial-dragged';
+		return '';
+	}
+
+	function clickTutorialCell(index: number) {
+		if (index === 12 && tutorialCenterClicks < 2) {
+			tutorialCenterClicks += 1;
+			return;
+		}
+		if (tutorialCenterClicks === 2 && [6, 7, 8, 11, 13, 16, 17, 18].includes(index) && !tutorialMarkedNeighbors.includes(index)) {
+			tutorialMarkedNeighbors = [...tutorialMarkedNeighbors, index];
+		}
+	}
+
+	function startTutorialDrag(event: PointerEvent) {
+		if (tutorialCenterClicks === 2 && tutorialMarkedNeighbors.length === 8) {
+			tutorialDragStart = { x: event.clientX, y: event.clientY };
+		}
+	}
+
+	function moveTutorialDrag(event: PointerEvent) {
+		if (!tutorialDragStart || tutorialDragComplete) return;
+		if (Math.hypot(event.clientX - tutorialDragStart.x, event.clientY - tutorialDragStart.y) >= 12) tutorialDragComplete = true;
+	}
+
+	function tutorialCellText(index: number) {
+		if (index === 12) return tutorialCenterClicks === 0 ? '' : tutorialCenterClicks === 1 ? 'X' : 'Q';
+		if (tutorialMarkedNeighbors.includes(index) || (tutorialDragComplete && (Math.floor(index / 5) === 2 || index % 5 === 2))) return 'X';
+		return '';
 	}
 
 	async function uploadBoard(event: Event) {
@@ -139,12 +183,20 @@
 
 	{#if screen === 'register'}
 		<section class="panel">
-			<h2>Registro de demostracion</h2>
-			<p>Ingrese datos de prueba para recorrer el flujo. El correo se recuerda solo en este navegador para mostrar el acceso de regreso.</p>
+			<h2>Bienvenidos a este mini-experimento</h2>
+			<p>Consiste en jugar a un juego llamado Queens, disponible en varios lugares, entre ellos LinkedIn. Si ya lo conoces, por favor informa a la persona que te invito a participar.</p>
+			<h3>Explicacion</h3>
+			<p>El experimento consiste en buscar, en un tablero parecido a uno de ajedrez, nueve reinas ocultas. Se medira cuanto tiempo te demoras en encontrarlas y cuantos movimientos necesitas para hacerlo. Si no lo consigues, se medira cuantas reinas pudiste encontrar.</p>
+			<h3>Proteccion de datos</h3>
+			<p>Los datos se reportaran de forma completamente anonima. Aunque puedes optar, solo si quieres, a conocer tu lugar en el ranking de jugadores de tu grupo. No sabras los nombres de los demas ni ellos el tuyo.</p>
+			<p>Tus datos se almacenaran por el tiempo necesario para realizar los analisis y podrian utilizarse en una extension de este mismo estudio, siempre de forma anonima. Todo dato personal sera desechado en un plazo no mayor a dos anos.</p>
+			<h3>Consentimiento</h3>
+			<p>El puntaje obtenido solo refleja el desempeno puntual y no pretende medir ningun tipo de inteligencia.</p>
+			<p>Al presionar Aceptar, informas que leiste y estas de acuerdo con lo anterior. Luego veras un pequeno tutorial y tres tableros que deberas resolver en 120 segundos.</p>
 			<form onsubmit={(event) => { event.preventDefault(); register(); }}>
 				<label>Nombre <input bind:value={name} autocomplete="name" required /></label>
 				<label>Correo <input bind:value={email} type="email" autocomplete="email" required /></label>
-				<button>Continuar</button>
+				<button>Aceptar y continuar</button>
 			</form>
 		</section>
 	{:else if screen === 'hub'}
@@ -160,19 +212,46 @@
 	{:else if screen === 'overview'}
 		<section class="panel">
 			<h2>Informacion general</h2>
-			<p>Resolvera tres tableros. Cada tarea tendra un limite de 120 segundos en la version experimental definitiva.</p>
+			<p>Resolveras tres tableros. Cada tarea tendra un limite de 120 segundos.</p>
 			{#if sequence.warning}<p class="warning">{sequence.warning}</p>{/if}
 			<button onclick={() => screen = 'tutorial'}>Ver tutorial</button>
 		</section>
 	{:else if screen === 'tutorial'}
 		<section class="panel">
-			<h2>Tutorial interactivo</h2>
-			<p>Las reglas y gestos definitivos se implementaran despues. Para continuar, confirme ambos controles.</p>
-			<div class="actions">
-				<button class:secondary={tutorialQueen} onclick={() => tutorialQueen = true}>{tutorialQueen ? 'Reina colocada' : 'Colocar reina'}</button>
-				<button class:secondary={tutorialMark} onclick={() => tutorialMark = true}>{tutorialMark ? 'Arrastre comprobado' : 'Simular arrastre de X'}</button>
-			</div>
-			<button disabled={!tutorialQueen || !tutorialMark} onclick={() => screen = 'prepare'}>Continuar</button>
+			<p class="eyebrow">Tutorial {tutorialStep} de 3</p>
+			{#if tutorialStep === 1}
+				<h2>Una reina bloquea sus celdas contiguas</h2>
+				<p>Debe haber una, y solo una, reina por fila y por columna. Las reinas no pueden estar en celdas contiguas, ni siquiera en diagonal.</p>
+				<p>Primero presiona dos veces la celda morada del centro: ahi hay una reina.</p>
+				<div class="tutorial-grid five">
+					{#each Array.from({ length: 25 }) as _, index}
+						<button type="button" class={tutorialCellClass(index)} onclick={() => clickTutorialCell(index)} onpointerdown={startTutorialDrag} onpointermove={moveTutorialDrag} onpointerup={() => tutorialDragStart = null}>{tutorialCellText(index)}</button>
+					{/each}
+				</div>
+				{#if tutorialCenterClicks === 2 && tutorialMarkedNeighbors.length < 8}<p>Ahora marca con X las ocho celdas que rodean a la reina.</p>{/if}
+				{#if tutorialCenterClicks === 2 && tutorialMarkedNeighbors.length === 8 && !tutorialDragComplete}<p>Ahora arrastra con el dedo o mouse para marcar una fila y una columna.</p>{/if}
+				<button disabled={!tutorialFirstComplete} onclick={() => tutorialStep = 2}>Siguiente</button>
+			{:else if tutorialStep === 2}
+				<h2>Descartar para encontrar una reina</h2>
+				<p>La reina en 1,1 bloquea sus celdas contiguas. Las celdas verdes ya descartadas dejan una unica celda verde disponible: marquela como reina.</p>
+				<div class="tutorial-grid three">
+					{#each Array.from({ length: 9 }) as _, index}
+						<button type="button" class:mini-queen={index === 0} class:mini-marked={[3, 4, 6, 7].includes(index)} class:mini-candidate={index === 8} onclick={() => { if (index === 8) tutorialCandidate = true; }}>{index === 0 ? 'Q' : [3, 4, 6, 7].includes(index) ? 'X' : index === 8 && tutorialCandidate ? 'Q' : ''}</button>
+					{/each}
+				</div>
+				<button disabled={!tutorialCandidate} onclick={() => tutorialStep = 3}>Siguiente</button>
+			{:else}
+				<h2>Una reina por fila y columna</h2>
+				<p>En la fila verde todas las celdas estan marcadas excepto la central: debe haber al menos una reina en cada fila y columna. En la fila inferior, las celdas laterales estan marcadas porque solo puede haber una reina por fila y columna.</p>
+				<div class="tutorial-grid five">
+					{#each Array.from({ length: 25 }) as _, index}
+						{@const row = Math.floor(index / 5)}
+						{@const column = index % 5}
+						<button type="button" class:mini-row={row === 1} class:mini-marked={(row === 1 && column !== 2) || (row === 3 && (column === 0 || column === 4))} class:mini-candidate={(row === 1 && column === 2) || (row === 3 && column === 2)} onclick={() => { if (row === 1 && column === 2) tutorialDeduction = true; }}>{((row === 1 && column !== 2) || (row === 3 && (column === 0 || column === 4))) ? 'X' : row === 1 && column === 2 && tutorialDeduction ? 'Q' : ''}</button>
+					{/each}
+				</div>
+				<button disabled={!tutorialDeduction} onclick={() => screen = 'prepare'}>Finalizar tutorial</button>
+			{/if}
 		</section>
 	{:else if screen === 'prepare' || screen === 'transition'}
 		<section class="panel">

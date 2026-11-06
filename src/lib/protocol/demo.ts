@@ -1,45 +1,23 @@
-import type { Group, ProtocolSequence, PuzzleDefinition } from '$lib/domain/types';
+import type { BoardAvailability, Group, ProtocolSequence, PuzzleDefinition, PuzzleStatus } from '$lib/domain/types';
+import queensGameCatalog from '../../../data/queensgame-9x9.json';
 
-const rowRegions = Array.from({ length: 9 }, (_, row) => Array.from({ length: 9 }, () => String.fromCharCode(65 + row)));
-const demoSolution = [1, 3, 5, 7, 9, 2, 4, 6, 8];
-
-export const demoPuzzles: PuzzleDefinition[] = [
-	{
-		id: 'demo-easy',
-		version: 'demo-1',
-		label: 'Tablero de demostracion 1',
-		availability: 'experimental',
-		status: 'pending_validation',
-		regions: rowRegions,
-		queenRowsByColumn: demoSolution
-	},
-	{
-		id: 'demo-challenge',
-		version: 'demo-1',
-		label: 'Tablero de demostracion 2',
-		availability: 'both',
-		status: 'pending_validation',
-		regions: rowRegions,
-		queenRowsByColumn: demoSolution
-	},
-	{
-		id: 'demo-common',
-		version: 'demo-1',
-		label: 'Tablero comun de demostracion',
-		availability: 'both',
-		status: 'pending_validation',
-		regions: rowRegions,
-		queenRowsByColumn: demoSolution
-	}
-];
+export const demoPuzzles: PuzzleDefinition[] = queensGameCatalog.boards.map((board) => ({
+	id: board.id,
+	version: board.version,
+	label: board.label,
+	availability: board.availability as BoardAvailability,
+	status: board.status as PuzzleStatus,
+	regions: board.regions,
+	queenRowsByColumn: board.queenRowsByColumn
+}));
 
 export const demoSequences: Record<Group, ProtocolSequence> = {
-	A: { group: 'A', puzzleIds: ['demo-easy', 'demo-challenge', 'demo-common'] },
-	B: { group: 'B', puzzleIds: ['demo-challenge', 'demo-easy', 'demo-common'] },
+	A: { group: 'A', puzzleIds: ['queensgame-16', 'queensgame-22', 'queensgame-47'] },
+	B: { group: 'B', puzzleIds: ['queensgame-58', 'queensgame-60', 'queensgame-47'] },
 	C: {
 		group: 'C',
-		puzzleIds: ['demo-challenge', 'demo-easy', 'demo-common'],
-		warning: 'Algunas tareas pueden resultar muy dificiles. Trabaje a su propio ritmo.'
+		puzzleIds: ['queensgame-58', 'queensgame-60', 'queensgame-47'],
+		warning: 'Debido a que este experimento busca medir el desempeno despues de haber sido expuestos a tareas extremadamente dificiles, es posible que se te presenten desafios muy dificiles o incluso imposibles de resolver en el tiempo previsto. Luego de eso pueden presentarse otros de dificultad moderada.'
 	}
 };
 

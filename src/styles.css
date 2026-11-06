@@ -23,6 +23,14 @@ input { border: 1px solid #94a3b8; border-radius: .35rem; padding: .65rem; }
 .board button.marked { color: #9f1239; }
 .board button.queen { color: #312e81; background: hsl(calc(var(--region) * 37) 65% 82%); }
 .board-help { margin: 0; max-width: 34rem; text-align: center; color: #475569; font-size: .9rem; }
+.tutorial-grid { display: grid; margin: 1.25rem auto; width: min(80vw, 20rem); aspect-ratio: 1; border: 2px solid #64748b; touch-action: none; user-select: none; }
+.tutorial-grid.five { grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); }
+.tutorial-grid.three { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: min(60vw, 12rem); }
+.tutorial-grid button { min-width: 0; min-height: 0; padding: 0; border-radius: 0; border: 1px solid #cbd5e1; color: #1e293b; background: #e5e7eb; line-height: 1; font-size: clamp(.8rem, 3vw, 1.5rem); }
+.tutorial-grid button.tutorial-queen, .tutorial-grid button.mini-queen { background: #a78bfa; color: #312e81; }
+.tutorial-grid button.tutorial-neighbor, .tutorial-grid button.mini-row { background: #bbf7d0; }
+.tutorial-grid button.tutorial-marked, .tutorial-grid button.tutorial-dragged, .tutorial-grid button.mini-marked { color: #9f1239; background: #bbf7d0; }
+.tutorial-grid button.mini-candidate { background: #86efac; color: #14532d; }
 code { background: #e2e8f0; padding: .1rem .25rem; border-radius: .2rem; }
 .upload-message { background: #ecfdf5; border-left: 4px solid #059669; padding: .75rem; }
 @media (max-width: 34rem) { main { padding-top: 1.5rem; } .game-meta { display: grid; } }
