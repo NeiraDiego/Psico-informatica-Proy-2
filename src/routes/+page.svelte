@@ -5,7 +5,7 @@
 	import { validateUploadedBoard } from '$lib/domain/board-validation';
 	import { isSolved } from '$lib/domain/queens-rules';
 	import { addMovement, completeAttempt, createAttempt, type AttemptDraft, type CompletedAttempt } from '$lib/experiment/measurement';
-	import { DEMO_ADMIN_EMAIL, demoPuzzles, getPuzzle, groupCWarning, pickDemoGroup } from '$lib/protocol/demo';
+	import { AUTHORIZED_EMAILS, demoPuzzles, getPuzzle, groupCWarning, pickDemoGroup } from '$lib/protocol/demo';
 	import type { BoardDefinition, BoardMovement, CellState, Group, PuzzleDefinition, PuzzleDifficulty } from '$lib/domain/types';
 
 	type Screen = 'register' | 'hub' | 'overview' | 'tutorial' | 'prepare' | 'puzzle' | 'transition' | 'complete' | 'free-play' | 'settings';
@@ -50,7 +50,7 @@
 		} as Record<Group, string[]>
 	});
 
-	const isDemoAdmin = $derived(email.trim().toLowerCase() === DEMO_ADMIN_EMAIL);
+	const isDemoAdmin = $derived(AUTHORIZED_EMAILS.includes(email.trim().toLowerCase()));
 	const allPuzzles = $derived([...demoPuzzles, ...uploadedPuzzles]);
 	const activeGroups = $derived((['A', 'B', 'C', 'D'] as Group[]).slice(0, experimentConfig.groupCount));
 	const activePuzzle = $derived(getPuzzle(experimentConfig.assignments[group][puzzlePosition]));

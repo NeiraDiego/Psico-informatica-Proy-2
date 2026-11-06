@@ -12,7 +12,7 @@ export const demoPuzzles: PuzzleDefinition[] = queensGameCatalog.boards.map((boa
 	queenRowsByColumn: board.queenRowsByColumn
 }));
 
-export const DEMO_ADMIN_EMAIL = 'diegoneira@gmail.com';
+export const AUTHORIZED_EMAILS = ['diegoneira@gmail.com', 'a@b.c', 'coni@udec.cl'];
 
 export const groupCWarning = 'Debido a que este experimento busca medir el desempeño después de haber sido expuestos a tareas extremadamente difíciles, es posible que se te presenten desafíos muy difíciles o incluso imposibles de resolver en el tiempo previsto. Luego de eso pueden presentarse otros de dificultad moderada.';
 
