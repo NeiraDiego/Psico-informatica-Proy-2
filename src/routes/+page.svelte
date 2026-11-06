@@ -37,22 +37,20 @@
 	let uploadMessage = $state('');
 	let showBoardCatalog = $state(false);
 	let participantName = $state('');
-	let additionalInfoGroups = $state<Record<Group, boolean>>({ A: false, B: false, C: true, D: false });
+	let additionalInfoGroups = $state<Record<Group, boolean>>({ A: false, B: false, C: true });
 	let freePlayDifficulty = $state<PuzzleDifficulty | null>(null);
 	let experimentConfig = $state({
-		groupCount: 3,
 		puzzleCount: 3,
 		assignments: {
 			A: ['queensgame-16', 'queensgame-22', 'queensgame-47'],
 			B: ['queensgame-58', 'queensgame-60', 'queensgame-47'],
-			C: ['queensgame-58', 'queensgame-60', 'queensgame-47'],
-			D: ['queensgame-16', 'queensgame-22', 'queensgame-47']
+			C: ['queensgame-58', 'queensgame-60', 'queensgame-47']
 		} as Record<Group, string[]>
 	});
 
 	const isDemoAdmin = $derived(AUTHORIZED_EMAILS.includes(email.trim().toLowerCase()));
 	const allPuzzles = $derived([...demoPuzzles, ...uploadedPuzzles]);
-	const activeGroups = $derived((['A', 'B', 'C', 'D'] as Group[]).slice(0, experimentConfig.groupCount));
+	const activeGroups: Group[] = ['A', 'B', 'C'];
 	const activePuzzle = $derived(getPuzzle(experimentConfig.assignments[group][puzzlePosition]));
 	const difficultyOptions: Array<{ value: PuzzleDifficulty; label: string }> = [{ value: 'easy', label: 'Fácil' }, { value: 'medium', label: 'Medio' }, { value: 'hard', label: 'Difícil' }, { value: 'expert', label: 'Experto' }];
 	const tutorialFirstComplete = $derived(tutorialMarkedNeighbors.length === 8 && tutorialDragComplete);
@@ -144,14 +142,18 @@
 		email = normalized;
 		if (!returning) {
 			sessionRegistrationStatus = 'pending';
-			const serverGroup = await registerServerSession(name.trim(), normalized, experimentConfig.groupCount, participantName.trim() || null);
-			group = serverGroup ?? pickDemoGroup(experimentConfig.groupCount);
+			const serverGroup = await registerServerSession(name.trim(), normalized, participantName.trim() || null);
+			group = serverGroup ?? pickDemoGroup();
+			localStorage.setItem(`queens-assigned-group:${normalized}`, group);
 			sessionRegistrationStatus = serverGroup ? 'ready' : 'idle';
+		} else {
+			const savedGroup = localStorage.getItem(`queens-assigned-group:${normalized}`);
+			if (savedGroup === 'A' || savedGroup === 'B' || savedGroup === 'C') group = savedGroup;
 		}
 		screen = returning ? 'hub' : 'overview';
 	}
 
-	async function registerServerSession(experimenterName: string, experimenterEmail: string, groupCount: number, registeredParticipantName: string | null): Promise<Group | null> {
+	async function registerServerSession(experimenterName: string, experimenterEmail: string, registeredParticipantName: string | null): Promise<Group | null> {
 		const keyName = `queens-session-key:${experimenterEmail}`;
 		let idempotencyKey = localStorage.getItem(keyName);
 		if (!idempotencyKey) {
@@ -162,7 +164,7 @@
 			const response = await fetch('/api/sessions', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ name: experimenterName, email: experimenterEmail, participant_name: registeredParticipantName, idempotency_key: idempotencyKey, group_count: groupCount }),
+				body: JSON.stringify({ name: experimenterName, email: experimenterEmail, participant_name: registeredParticipantName, idempotency_key: idempotencyKey }),
 				credentials: 'same-origin'
 			});
 			if (!response.ok) return null;
@@ -174,7 +176,7 @@
 	}
 
 	function beginExperiment() {
-		if (!activeGroups.includes(group)) group = pickDemoGroup(experimentConfig.groupCount);
+		if (!activeGroups.includes(group)) group = pickDemoGroup();
 		puzzlePosition = 0;
 		moveCount = 0;
 		tutorialStep = 1;
@@ -231,11 +233,10 @@
 		return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, '0')}`;
 	}
 
-	function resizeExperiment(groupCount: number, puzzleCount: number) {
-		experimentConfig.groupCount = groupCount;
+	function resizeExperiment(puzzleCount: number) {
 		experimentConfig.puzzleCount = puzzleCount;
 		const fallbackPuzzleId = allPuzzles[0]?.id ?? '';
-		for (const groupCode of ['A', 'B', 'C', 'D'] as Group[]) {
+		for (const groupCode of activeGroups) {
 			const assignments = experimentConfig.assignments[groupCode];
 			while (assignments.length < puzzleCount) assignments.push(fallbackPuzzleId);
 			experimentConfig.assignments[groupCode] = assignments.slice(0, puzzleCount);
@@ -488,6 +489,7 @@
 			<h2>Experimento finalizado</h2>
 			<p>{deliveryStatus === 'sent' ? 'Resultados enviados.' : 'Resultados guardados localmente y pendientes de envío.'}</p>
 			<p>Se registraron {completedAttempts.length} intentos. El cierre, consentimiento y explicación final son borradores.</p>
+			<p>Perteneciste al grupo <strong>{group}</strong>.</p>
 			<p>A algunos participantes, elegidos al azar, se les presentaron tableros con dificultades artificialmente altas para ver cómo esto influía en tableros posteriores. Te invitamos a que juegues libremente tableros reales con dificultades reales cuando quieras, entrando con tu correo electrónico a esta misma página.</p>
 			<div class="actions"><button onclick={() => openFreePlay()}>Juego libre</button><button class="secondary" onclick={() => screen = 'hub'}>Opciones de regreso</button>{#if isDemoAdmin}<button class="secondary" onclick={() => screen = 'settings'}>Configuración</button>{/if}</div>
 		</section>
@@ -506,13 +508,9 @@
 				<input bind:value={participantName} autocomplete="name" />
 			</label>
 			<div class="settings-grid">
-				<label>Grupos
-					<select value={experimentConfig.groupCount} onchange={(event) => resizeExperiment(Number(event.currentTarget.value), experimentConfig.puzzleCount)}>
-						<option value="1">1 grupo (A)</option><option value="2">2 grupos (A-B)</option><option value="3">3 grupos (A-C)</option><option value="4">4 grupos (A-D)</option>
-					</select>
-				</label>
+				<p>Grupos experimentales: A, B y C. La asignación se realiza aleatoriamente con probabilidad 1/3 para cada grupo.</p>
 				<label>Tableros por experimento
-					<select value={experimentConfig.puzzleCount} onchange={(event) => resizeExperiment(experimentConfig.groupCount, Number(event.currentTarget.value))}>
+					<select value={experimentConfig.puzzleCount} onchange={(event) => resizeExperiment(Number(event.currentTarget.value))}>
 						<option value="2">2 tableros</option><option value="3">3 tableros</option><option value="4">4 tableros</option><option value="5">5 tableros</option>
 					</select>
 				</label>

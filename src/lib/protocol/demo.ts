@@ -16,9 +16,9 @@ export const AUTHORIZED_EMAILS = ['diegoneira@gmail.com', 'a@b.c', 'coni@udec.cl
 
 export const groupCWarning = 'Debido a que este experimento busca medir el desempeño después de haber sido expuestos a tareas extremadamente difíciles, es posible que se te presenten desafíos muy difíciles o incluso imposibles de resolver en el tiempo previsto. Luego de eso pueden presentarse otros de dificultad moderada.';
 
-export function pickDemoGroup(groupCount: number): Group {
-	const groups: Group[] = ['A', 'B', 'C', 'D'];
-	return groups[Math.floor(Math.random() * groupCount)];
+export function pickDemoGroup(): Group {
+	const groups: Group[] = ['A', 'B', 'C'];
+	return groups[Math.floor(Math.random() * groups.length)];
 }
 
 export function getPuzzle(id: string): PuzzleDefinition {

@@ -6,18 +6,17 @@ function hashToken(token: string) {
 	return createHash('sha256').update(token).digest('hex');
 }
 
-function chooseGroup(groupCount: number) {
-	return ['A', 'B', 'C', 'D'][Math.floor(Math.random() * groupCount)];
+function chooseGroup() {
+	return ['A', 'B', 'C'][Math.floor(Math.random() * 3)];
 }
 
 export async function POST({ request, cookies }) {
 	const body: unknown = await request.json().catch(() => null);
 	if (!body || typeof body !== 'object') return json({ error: 'Cuerpo JSON inválido.' }, { status: 400 });
-	const { name, email, participant_name, idempotency_key, group_count } = body as Record<string, unknown>;
+	const { name, email, participant_name, idempotency_key } = body as Record<string, unknown>;
 	if (typeof name !== 'string' || !name.trim() || name.length > 200) return json({ error: 'Nombre inválido.' }, { status: 400 });
 	if (typeof email !== 'string' || !/^\S+@\S+\.\S+$/.test(email) || email.length > 320) return json({ error: 'Correo inválido.' }, { status: 400 });
 	if (typeof idempotency_key !== 'string' || !/^[a-f0-9-]{36}$/i.test(idempotency_key)) return json({ error: 'Clave de idempotencia inválida.' }, { status: 400 });
-	if (!Number.isInteger(group_count) || (group_count as number) < 1 || (group_count as number) > 4) return json({ error: 'Cantidad de grupos inválida.' }, { status: 400 });
 	if (participant_name !== null && participant_name !== undefined && (typeof participant_name !== 'string' || participant_name.length > 200)) return json({ error: 'Participante inválido.' }, { status: 400 });
 	if (!supabaseConfig()) return json({ error: 'Persistencia no configurada.' }, { status: 503 });
 
@@ -34,7 +33,7 @@ export async function POST({ request, cookies }) {
 	if (!participantResponse.ok) return json({ error: 'No se pudo crear el participante.' }, { status: 502 });
 	const [participant] = await participantResponse.json() as Array<{ id: string }>;
 	const token = randomUUID() + randomUUID();
-	const group = chooseGroup(group_count as number);
+	const group = chooseGroup();
 	const sessionResponse = await supabaseRequest('sessions', {
 		method: 'POST',
 		body: JSON.stringify({
