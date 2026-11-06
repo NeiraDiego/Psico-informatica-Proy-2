@@ -37,14 +37,16 @@
 	let uploadMessage = $state('');
 	let showBoardCatalog = $state(false);
 	let participantName = $state('');
-	let additionalInfoGroups = $state<Record<Group, boolean>>({ A: false, B: false, C: true });
+	let additionalInfoGroups = $state<Record<Group, boolean>>({ A: false, B: false, C: true, D: false, E: false });
 	let freePlayDifficulty = $state<PuzzleDifficulty | null>(null);
 	let experimentConfig = $state({
 		puzzleCount: 3,
 		assignments: {
 			A: ['queensgame-16', 'queensgame-22', 'queensgame-47'],
 			B: ['queensgame-58', 'queensgame-60', 'queensgame-47'],
-			C: ['queensgame-58', 'queensgame-60', 'queensgame-47']
+			C: ['queensgame-58', 'queensgame-60', 'queensgame-47'],
+			D: ['queensgame-16', 'queensgame-22', 'queensgame-47'],
+			E: ['queensgame-16', 'queensgame-22', 'queensgame-47']
 		} as Record<Group, string[]>
 	});
 
@@ -148,7 +150,7 @@
 			sessionRegistrationStatus = serverGroup ? 'ready' : 'idle';
 		} else {
 			const savedGroup = localStorage.getItem(`queens-assigned-group:${normalized}`);
-			if (savedGroup === 'A' || savedGroup === 'B' || savedGroup === 'C') group = savedGroup;
+			if (savedGroup === 'A' || savedGroup === 'B' || savedGroup === 'C' || savedGroup === 'D' || savedGroup === 'E') group = savedGroup;
 		}
 		screen = returning ? 'hub' : 'overview';
 	}

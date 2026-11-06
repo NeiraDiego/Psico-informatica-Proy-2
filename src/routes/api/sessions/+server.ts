@@ -22,7 +22,7 @@ export async function POST({ request, cookies }) {
 
 	const existing = await supabaseRequest(`sessions?select=id,group&idempotency_key=eq.${encodeURIComponent(idempotency_key)}`);
 	if (!existing.ok) return json({ error: 'No se pudo consultar la sesión.' }, { status: 502 });
-	const sessions = await existing.json() as Array<{ id: string; group: 'A' | 'B' | 'C' }>;
+	const sessions = await existing.json() as Array<{ id: string; group: 'A' | 'B' | 'C' | 'D' | 'E' }>;
 	if (sessions[0]) return json({ group: sessions[0].group, reused: true });
 
 	const participantResponse = await supabaseRequest('participants', {

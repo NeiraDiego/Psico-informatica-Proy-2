@@ -1,4 +1,4 @@
-export type Group = 'A' | 'B' | 'C';
+export type Group = 'A' | 'B' | 'C' | 'D' | 'E';
 export type BoardAvailability = 'experimental' | 'free_play' | 'both';
 export type PuzzleStatus = 'solvable' | 'unsolvable' | 'pending_validation';
 export type PuzzleDifficulty = 'easy' | 'medium' | 'hard' | 'expert';
