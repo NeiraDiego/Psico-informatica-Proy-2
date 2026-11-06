@@ -19,6 +19,8 @@
 	let tutorialStep = $state(1);
 	let tutorialMarkedNeighbors = $state<number[]>([]);
 	let tutorialDragComplete = $state(false);
+	let tutorialTwoCells = $state<CellState[]>(Array.from({ length: 25 }, () => 'empty'));
+	let tutorialThreeCells = $state<CellState[]>(Array.from({ length: 25 }, () => 'empty'));
 	let moveCount = $state(0);
 	let activeAttempt = $state<AttemptDraft | null>(null);
 	let completedAttempts = $state<CompletedAttempt[]>([]);
@@ -76,6 +78,19 @@
 	}
 
 	const tutorialInitialStates = tutorialBoards.map((tutorial) => tutorialInitialCells(tutorial.queenRowsByColumn));
+	const tutorialTwoInitialCells: CellState[] = Array.from({ length: 25 }, () => 'empty');
+	const tutorialThreeInitialCells: CellState[] = Array.from({ length: 25 }, () => 'empty');
+	const tutorialTwoQueenCells = [0, 7, 14, 16, 23];
+	const tutorialTwoProgress = $derived(tutorialTwoQueenCells.filter((queenIndex) => {
+		const row = Math.floor(queenIndex / 5);
+		return tutorialTwoCells[queenIndex] === 'queen' && Array.from({ length: 5 }, (_, column) => row * 5 + column).every((index) => index === queenIndex || tutorialTwoCells[index] === 'mark');
+	}).length);
+	const tutorialTwoComplete = $derived(tutorialTwoProgress === tutorialTwoQueenCells.length);
+	const tutorialThreeOrangeCells = [5, 6, 8, 9];
+	const tutorialThreeOrangeMarked = $derived(tutorialThreeOrangeCells.every((index) => tutorialThreeCells[index] === 'mark'));
+	const tutorialThreeGreenQueen = $derived(tutorialThreeCells[7] === 'queen');
+	const tutorialThreeEdgeCells = [15, 19];
+	const tutorialThreeComplete = $derived(tutorialThreeOrangeMarked && tutorialThreeGreenQueen && tutorialThreeEdgeCells.every((index) => tutorialThreeCells[index] === 'mark'));
 
 	onMount(() => {
 		const stored = localStorage.getItem('queens-demo-emails');
@@ -162,6 +177,8 @@
 		tutorialStep = 1;
 		tutorialMarkedNeighbors = [];
 		tutorialDragComplete = false;
+		tutorialTwoCells = Array.from({ length: 25 }, () => 'empty');
+		tutorialThreeCells = Array.from({ length: 25 }, () => 'empty');
 		screen = 'overview';
 	}
 
@@ -302,6 +319,14 @@
 		}
 	}
 
+	function trackTutorialTwoMovement(movement: BoardMovement) {
+		for (const change of movement.changes) tutorialTwoCells[change.index] = change.next;
+	}
+
+	function trackTutorialThreeMovement(movement: BoardMovement) {
+		for (const change of movement.changes) tutorialThreeCells[change.index] = change.next;
+	}
+
 	async function uploadBoard(event: Event) {
 		const input = event.currentTarget as HTMLInputElement;
 		const file = input.files?.[0];
@@ -380,20 +405,30 @@
 			{#if tutorialStep === 1}
 				<h2>Una reina bloquea sus celdas contiguas</h2>
 				<p>Debe haber una, y solo una, reina por fila y por columna. Las reinas no pueden estar en celdas contiguas, ni siquiera en diagonal.</p>
-				<p>La reina morada ya está indicada. Marca con X las ocho celdas que la rodean y luego arrastra para practicar el gesto de marcado.</p>
+				<p>Marca con X, haciendo un solo clic, en las cuatro celdas verde oscuro de los bordes. Luego haz clic en cualquiera de las ocho celdas verde claro alrededor de la reina y arrastra por las demás para marcarlas en un solo movimiento.</p>
 				<QueensBoard board={tutorialBoards[0].board} initialCells={tutorialInitialStates[0]} cellClass={tutorialCellClass} onmove={trackTutorialFirstMovement} />
 				{#if tutorialMarkedNeighbors.length === 8 && !tutorialDragComplete}<p>Ahora arrastra con el dedo o mouse sobre celdas vacías para practicar el gesto de marcado.</p>{/if}
 				<button disabled={!tutorialFirstComplete} onclick={() => tutorialStep = 2}>Siguiente</button>
 			{:else if tutorialStep === 2}
 				<h2>Descartar para encontrar una reina</h2>
-				<p>Los colores representan regiones. Observa cómo las cinco reinas indicadas ocupan filas, columnas y regiones diferentes, sin tocarse entre sí.</p>
-				<QueensBoard board={tutorialBoards[1].board} initialCells={tutorialInitialStates[1]} disabled />
-				<button onclick={() => tutorialStep = 3}>Siguiente</button>
+				<p>Los colores representan regiones. Debe haber una, y solo una, reina por región.</p>
+				<ol class="tutorial-steps">
+					<li class:completed={tutorialTwoCells[0] === 'queen'}>Marca la casilla naranja como una reina haciendo dos clics.</li>
+					{#if tutorialTwoCells[0] === 'queen'}<li class:completed={tutorialTwoProgress >= 1}>Marca la fila completa con X, ya que ya encontramos la reina de esa fila. Recuerda que puedes arrastrar para marcar en un movimiento.</li>{/if}
+					{#if tutorialTwoProgress >= 1}<li class:completed={tutorialTwoCells[7] === 'queen'}>Ahora solo queda una celda amarilla. Nuestra reina amarilla debe estar ahí: márcala con dos clics y marca el resto de la fila con X.</li>{/if}
+					{#if tutorialTwoProgress >= 2}<li class:completed={tutorialTwoComplete}>Repite hasta encontrar todas las reinas.</li>{/if}
+				</ol>
+				<QueensBoard board={tutorialBoards[1].board} initialCells={tutorialTwoInitialCells} onmove={trackTutorialTwoMovement} />
+				<button disabled={!tutorialTwoComplete} onclick={() => tutorialStep = 3}>Siguiente</button>
 			{:else}
 				<h2>Una reina por fila y columna</h2>
-				<p>Las referencias moradas muestran celdas que debes considerar al descartar opciones por fila, columna, región y contacto diagonal. Una referencia parcial no es una solución completa.</p>
-				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialInitialStates[2]} disabled />
-				<button onclick={() => screen = 'prepare'}>Finalizar tutorial</button>
+				<ol class="tutorial-steps">
+					<li class:completed={tutorialThreeOrangeMarked}>Si una fila completa es de un color, sabemos que la reina de ese color está en esa fila, por lo que podemos descartar todas las celdas naranjas de la segunda fila.</li>
+					{#if tutorialThreeOrangeMarked}<li class:completed={tutorialThreeGreenQueen}>Si en una fila solo queda una casilla, esta debe ser una reina. Marca la reina verde en la segunda fila.</li>{/if}
+					{#if tutorialThreeGreenQueen}<li class:completed={tutorialThreeComplete}>Si todas las celdas de un color están en una sola fila o columna, la reina de esa fila o columna debe ser de ese color. Por lo tanto, en la fila 4 puedes marcar con X las celdas de los extremos.</li>{/if}
+				</ol>
+				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialThreeInitialCells} onmove={trackTutorialThreeMovement} />
+				<button disabled={!tutorialThreeComplete} onclick={() => screen = 'prepare'}>Comenzar experimento</button>
 			{/if}
 		</section>
 	{:else if screen === 'prepare' || screen === 'transition'}
