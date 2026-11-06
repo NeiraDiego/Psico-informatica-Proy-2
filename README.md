@@ -46,7 +46,7 @@ El reconocimiento de regreso se guarda solo en `localStorage` y contiene unicame
 - **Configuracion** se muestra solo para el correo sintético indicado arriba. La version definitiva consultara `ADMIN_EMAILS` exclusivamente en el servidor. La coincidencia de correo sin verificacion no es autenticacion robusta y no debe dar acceso a historiales ni datos de participantes.
 - La configuracion todavia no persiste ni publica cambios. La carga definitiva validara matriz 9x9, nueve regiones, conectividad y soluciones, y publicara versiones nuevas sin alterar sesiones historicas.
 
-Actualmente Configuracion permite cargar un JSON **solo durante la pagina abierta** para probar un tablero en juego libre. El archivo debe contener `regions`, una matriz de nueve filas de nueve letras entre `A` e `I`; cada letra representa una region y debe formar una zona conexa por sus lados. `queenRowsByColumn` es una lista de nueve filas, una para cada columna de izquierda a derecha, que indica la fila (de 1 a 9) donde se ubica la reina de la solucion declarada:
+Actualmente Configuracion permite cargar un JSON **solo durante la pagina abierta** para probar un tablero en juego libre. Puede ser un tablero individual o un catalogo cuyo objeto raiz contiene `boards`. El archivo `data/queensgame-9x9.json` es un catalogo listo para cargar. Cada tablero debe contener `regions`, una matriz de nueve filas de nueve letras entre `A` e `I`; cada letra representa una region y debe formar una zona conexa por sus lados. `queenRowsByColumn` es una lista de nueve filas, una para cada columna de izquierda a derecha, que indica la fila (de 1 a 9) donde se ubica la reina de la solucion declarada:
 
 ```json
 {
@@ -59,6 +59,16 @@ Actualmente Configuracion permite cargar un JSON **solo durante la pagina abiert
 ```
 
 `availability` admite `experimental`, `free_play` o `both`. La carga comprueba que las posiciones declaradas no compartan fila ni region y que no haya reinas adyacentes. La persistencia y un solver independiente que cuente soluciones se implementaran junto con Supabase.
+
+## Convertir mapas de origen
+
+Los diez mapas suministrados en `../diez_mapas_9x9.json` se convirtieron a `data/queensgame-9x9.json`. Para regenerar ese archivo tras cambiar el origen:
+
+```bash
+npm run boards:convert
+```
+
+El conversor traduce regiones numericas `0..8` a `A..I`, conserva identificador y URL de origen, y calcula una solucion válida por búsqueda exhaustiva con las reglas de filas, columnas, regiones y adyacencia.
 
 ## Decisiones pendientes antes de recoleccion
 

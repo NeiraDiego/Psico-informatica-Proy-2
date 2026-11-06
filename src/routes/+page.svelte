@@ -104,17 +104,24 @@
 		const file = input.files?.[0];
 		if (!file) return;
 		try {
-			const result = validateUploadedBoard(JSON.parse(await file.text()));
-			if (!result.puzzle) {
-				uploadMessage = result.error ?? 'No se pudo validar el tablero.';
+			const parsed = JSON.parse(await file.text());
+			const candidates = Array.isArray(parsed.boards) ? parsed.boards : [parsed];
+			const puzzles: PuzzleDefinition[] = [];
+			for (const candidate of candidates) {
+				const result = validateUploadedBoard(candidate);
+				if (!result.puzzle) {
+					uploadMessage = result.error ?? 'No se pudo validar el tablero.';
+					return;
+				}
+				puzzles.push(result.puzzle);
+			}
+			const existingIds = new Set(allPuzzles.map((puzzle) => puzzle.id));
+			if (puzzles.some((puzzle) => existingIds.has(puzzle.id)) || new Set(puzzles.map((puzzle) => puzzle.id)).size !== puzzles.length) {
+				uploadMessage = 'El catalogo contiene un identificador de tablero ya cargado o repetido.';
 				return;
 			}
-			if (allPuzzles.some((puzzle) => puzzle.id === result.puzzle?.id)) {
-				uploadMessage = 'Ya existe un tablero con ese identificador.';
-				return;
-			}
-			uploadedPuzzles = [...uploadedPuzzles, result.puzzle];
-			uploadMessage = `Tablero "${result.puzzle.label}" cargado solo para esta demostracion.`;
+			uploadedPuzzles = [...uploadedPuzzles, ...puzzles];
+			uploadMessage = `${puzzles.length} tablero(s) cargado(s) solo para esta demostracion.`;
 		} catch {
 			uploadMessage = 'El archivo debe ser JSON valido.';
 		} finally {

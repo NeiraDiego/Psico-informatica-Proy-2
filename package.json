@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "vite dev",
+	"scripts": {
+		"boards:convert": "node scripts/convert-queens-maps.mjs ../diez_mapas_9x9.json data/queensgame-9x9.json",
+		"dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync",
