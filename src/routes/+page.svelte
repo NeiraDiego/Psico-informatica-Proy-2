@@ -439,7 +439,7 @@
 				<p>Marca con X, haciendo un solo clic, en las cuatro celdas verde oscuro de los bordes. Luego haz clic en cualquiera de las ocho celdas verde claro alrededor de la reina y arrastra por las demás para marcarlas en un solo movimiento.</p>
 				<QueensBoard board={tutorialBoards[0].board} initialCells={tutorialInitialStates[0]} cellClass={tutorialCellClass} onmove={trackTutorialFirstMovement} />
 				{#if tutorialMarkedNeighbors.length === 8 && !tutorialDragComplete}<p>Ahora arrastra con el dedo o mouse sobre celdas vacías para practicar el gesto de marcado.</p>{/if}
-				<div class="actions"><button disabled={!tutorialFirstComplete} onclick={() => tutorialStep = 2}>Siguiente</button><button class="secondary" onclick={() => screen = 'register'}>Volver al menú inicial</button></div>
+				<div class="actions"><button disabled={!tutorialFirstComplete} onclick={() => tutorialStep = 2}>Siguiente</button><button class="secondary" onclick={() => screen = 'hub'}>Volver al menú inicial</button></div>
 			{:else if tutorialStep === 2}
 				<h2>Descartar para encontrar una reina</h2>
 				<p>Los colores representan regiones. Debe haber una, y solo una, reina por región.</p>
@@ -450,7 +450,7 @@
 					{#if tutorialTwoProgress >= 2}<li class:completed={tutorialTwoComplete}>Repite hasta encontrar todas las reinas.</li>{/if}
 				</ol>
 				<QueensBoard board={tutorialBoards[1].board} initialCells={tutorialTwoInitialCells} onmove={trackTutorialTwoMovement} />
-				<div class="actions"><button disabled={!tutorialTwoComplete} onclick={() => tutorialStep = 3}>Siguiente</button><button class="secondary" onclick={() => screen = 'register'}>Volver al menú inicial</button></div>
+				<div class="actions"><button disabled={!tutorialTwoComplete} onclick={() => tutorialStep = 3}>Siguiente</button><button class="secondary" onclick={() => screen = 'hub'}>Volver al menú inicial</button></div>
 			{:else}
 				<h2>Una reina por fila y columna</h2>
 				<ol class="tutorial-steps">
@@ -459,7 +459,7 @@
 					{#if tutorialThreeGreenQueen}<li class:completed={tutorialThreeComplete}>Si todas las celdas de un color están en una sola fila o columna, la reina de esa fila o columna debe ser de ese color. Por lo tanto, en la fila 4 puedes marcar con X las celdas de los extremos.</li>{/if}
 				</ol>
 				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialThreeInitialCells} onmove={trackTutorialThreeMovement} />
-				<div class="actions"><button disabled={!tutorialThreeComplete} onclick={() => screen = 'prepare'}>Comenzar experimento</button><button class="secondary" onclick={() => screen = 'register'}>Volver al menú inicial</button></div>
+				<div class="actions"><button disabled={!tutorialThreeComplete} onclick={() => screen = 'prepare'}>Comenzar experimento</button><button class="secondary" onclick={() => screen = 'hub'}>Volver al menú inicial</button></div>
 			{/if}
 		</section>
 	{:else if screen === 'prepare' || screen === 'transition'}
