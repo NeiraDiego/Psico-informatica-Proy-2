@@ -13,10 +13,11 @@ function isAvailability(value: unknown): value is BoardAvailability {
 }
 
 function hasConnectedRegions(regions: string[][], regionIds: string[]) {
+	const size = regions.length;
 	for (const regionId of regionIds) {
 		const cells: Array<[number, number]> = [];
-		for (let row = 0; row < 9; row += 1) {
-			for (let column = 0; column < 9; column += 1) {
+		for (let row = 0; row < size; row += 1) {
+			for (let column = 0; column < size; column += 1) {
 				if (regions[row][column] === regionId) cells.push([row, column]);
 			}
 		}
@@ -28,7 +29,7 @@ function hasConnectedRegions(regions: string[][], regionIds: string[]) {
 			if (visited.has(key)) continue;
 			visited.add(key);
 			for (const [nextRow, nextColumn] of [[row - 1, column], [row + 1, column], [row, column - 1], [row, column + 1]]) {
-				if (nextRow >= 0 && nextRow < 9 && nextColumn >= 0 && nextColumn < 9 && regions[nextRow][nextColumn] === regionId) {
+				if (nextRow >= 0 && nextRow < size && nextColumn >= 0 && nextColumn < size && regions[nextRow][nextColumn] === regionId) {
 					pending.push([nextRow, nextColumn]);
 				}
 			}
@@ -39,11 +40,12 @@ function hasConnectedRegions(regions: string[][], regionIds: string[]) {
 }
 
 function hasValidQueenPositions(regions: string[][], queenRowsByColumn: number[]) {
-	if (queenRowsByColumn.length !== 9 || !queenRowsByColumn.every((row) => Number.isInteger(row) && row >= 1 && row <= 9)) return false;
+	const size = regions.length;
+	if (queenRowsByColumn.length !== size || !queenRowsByColumn.every((row) => Number.isInteger(row) && row >= 1 && row <= size)) return false;
 	const rows = queenRowsByColumn.map((row) => row - 1);
-	if (new Set(rows).size !== 9) return false;
+	if (new Set(rows).size !== size) return false;
 	const queenRegions = new Set(rows.map((row, column) => regions[row][column]));
-	if (queenRegions.size !== 9) return false;
+	if (queenRegions.size !== size) return false;
 	return rows.every((row, column) => column === 0 || Math.abs(row - rows[column - 1]) > 1);
 }
 
@@ -53,20 +55,29 @@ export function validateUploadedBoard(payload: UploadPayload): { puzzle?: Puzzle
 	}
 	if (typeof payload.label !== 'string' || !payload.label.trim()) return { error: 'El tablero necesita un nombre.' };
 	if (!isAvailability(payload.availability)) return { error: 'La disponibilidad debe ser experimental, free_play o both.' };
-	if (!Array.isArray(payload.regions) || payload.regions.length !== 9 || !payload.regions.every((row) => Array.isArray(row) && row.length === 9)) {
-		return { error: 'La matriz regions debe ser de 9 por 9.' };
+	if (!Array.isArray(payload.regions) || payload.regions.length < 2) {
+		return { error: 'La matriz regions debe ser cuadrada y tener al menos 2 filas.' };
 	}
-	if (!payload.regions.flat().every((cell) => typeof cell === 'string' && /^[A-I]$/.test(cell))) {
-		return { error: 'Cada celda de regions debe contener una letra de A a I.' };
+	const rawRegions = payload.regions;
+	if (!rawRegions.every((row) => Array.isArray(row) && row.length === rawRegions.length)) {
+		return { error: 'La matriz regions debe ser cuadrada y tener al menos 2 filas.' };
 	}
-	const regions = payload.regions as string[][];
+	if (!rawRegions.flat().every((cell) => typeof cell === 'string' && /^[A-Z]$/.test(cell))) {
+		return { error: 'Cada celda de regions debe contener una letra mayuscula.' };
+	}
+	const regions = rawRegions as string[][];
+	const size = regions.length;
 	const regionIds = [...new Set(regions.flat())];
-	if (regionIds.length !== 9) return { error: 'El tablero debe tener exactamente nueve regiones.' };
+	if (regionIds.length !== size) return { error: 'El tablero debe tener exactamente una region por cada fila y columna.' };
 	if (!hasConnectedRegions(regions, regionIds)) return { error: 'Cada region debe ser conexa por sus lados.' };
-	if (!Array.isArray(payload.queenRowsByColumn)) return { error: 'Debe indicar queenRowsByColumn con nueve filas, una por columna.' };
+	if (payload.availability !== 'free_play' && size !== 9) return { error: 'Los tableros experimentales deben ser de 9 por 9.' };
+	if (payload.availability !== 'free_play' && regionIds.sort().join('') !== 'ABCDEFGHI') {
+		return { error: 'Los tableros experimentales deben usar las regiones A a I.' };
+	}
+	if (!Array.isArray(payload.queenRowsByColumn)) return { error: `Debe indicar queenRowsByColumn con ${size} filas, una por columna.` };
 	const queenRowsByColumn = payload.queenRowsByColumn as number[];
 	if (!hasValidQueenPositions(regions, queenRowsByColumn)) {
-		return { error: 'Las posiciones de reinas deben usar filas 1 a 9, sin repetir fila ni region, y sin reinas adyacentes.' };
+		return { error: `Las posiciones de reinas deben usar filas 1 a ${size}, sin repetir fila ni region, y sin reinas adyacentes.` };
 	}
 	return {
 		puzzle: {

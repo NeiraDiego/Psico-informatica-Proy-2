@@ -18,10 +18,13 @@ input { border: 1px solid #94a3b8; border-radius: .35rem; padding: .65rem; }
 .actions { display: flex; gap: .75rem; flex-wrap: wrap; margin: 1.25rem 0; }
 .game-layout { display: grid; justify-items: center; gap: 1.25rem; }
 .game-meta { display: flex; width: 100%; justify-content: space-between; gap: .5rem; flex-wrap: wrap; font-weight: 650; }
-.board { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); grid-template-rows: repeat(9, minmax(0, 1fr)); width: min(90vw, 34rem); aspect-ratio: 1; border: 3px solid #334155; touch-action: none; user-select: none; }
-.board button { min-width: 0; min-height: 0; padding: 0; border-radius: 0; border: 1px solid #cbd5e1; color: #172554; background: hsl(calc(var(--region) * 37) 65% 91%); font-size: clamp(.75rem, 3vw, 1.55rem); line-height: 1; }
+.board { display: grid; grid-template-columns: repeat(var(--board-size), minmax(0, 1fr)); grid-template-rows: repeat(var(--board-size), minmax(0, 1fr)); width: min(90vw, 34rem); aspect-ratio: 1; border: 3px solid #334155; touch-action: none; user-select: none; }
+.board.mini-board { width: min(80vw, 20rem); }
+.board button { min-width: 0; min-height: 0; padding: 0; border-radius: 0; border: 1px solid #cbd5e1; color: #172554; background: hsl(calc(var(--region) * 37) 65% 82%); font-size: clamp(.75rem, 3vw, 1.55rem); line-height: 1; }
+.board button:disabled { opacity: 1; cursor: default; }
 .board button.marked { color: #9f1239; }
 .board button.queen { color: #312e81; background: hsl(calc(var(--region) * 37) 65% 82%); }
+.board button.tutorial-queen { background: #a78bfa; color: #312e81; }
 .board-help { margin: 0; max-width: 34rem; text-align: center; color: #475569; font-size: .9rem; }
 .tutorial-grid { display: grid; margin: 1.25rem auto; width: min(80vw, 20rem); aspect-ratio: 1; border: 2px solid #64748b; touch-action: none; user-select: none; }
 .tutorial-grid.five { grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr); }

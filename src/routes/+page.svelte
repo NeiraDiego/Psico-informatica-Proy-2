@@ -3,7 +3,7 @@
 	import QueensBoard from '$lib/components/QueensBoard.svelte';
 	import { validateUploadedBoard } from '$lib/domain/board-validation';
 	import { DEMO_ADMIN_EMAIL, demoPuzzles, demoSequences, getPuzzle, pickDemoGroup } from '$lib/protocol/demo';
-	import type { Group, PuzzleDefinition } from '$lib/domain/types';
+	import type { BoardDefinition, BoardMovement, CellState, Group, PuzzleDefinition } from '$lib/domain/types';
 
 	type Screen = 'register' | 'hub' | 'overview' | 'tutorial' | 'prepare' | 'puzzle' | 'transition' | 'complete' | 'free-play' | 'settings';
 
@@ -14,12 +14,8 @@
 	let group = $state<Group>('A');
 	let puzzlePosition = $state(0);
 	let tutorialStep = $state(1);
-	let tutorialCenterClicks = $state(0);
 	let tutorialMarkedNeighbors = $state<number[]>([]);
-	let tutorialDragStart = $state<{ x: number; y: number } | null>(null);
 	let tutorialDragComplete = $state(false);
-	let tutorialCandidate = $state(false);
-	let tutorialDeduction = $state(false);
 	let moveCount = $state(0);
 	let freePuzzle = $state<PuzzleDefinition>(demoPuzzles[1]);
 	let freeStartedAt = $state(0);
@@ -32,7 +28,32 @@
 	const allPuzzles = $derived([...demoPuzzles, ...uploadedPuzzles]);
 	const sequence = $derived(demoSequences[group]);
 	const activePuzzle = $derived(getPuzzle(sequence.puzzleIds[puzzlePosition]));
-	const tutorialFirstComplete = $derived(tutorialCenterClicks === 2 && tutorialMarkedNeighbors.length === 8 && tutorialDragComplete);
+	const tutorialFirstComplete = $derived(tutorialMarkedNeighbors.length === 8 && tutorialDragComplete);
+	const tutorialBoards: Array<{ board: BoardDefinition; queenRowsByColumn: Array<number | undefined> }> = [
+		{
+			board: { id: 'tutorial-marcado', label: 'Tutorial: marcado', regions: [['A', 'A', 'D', 'A', 'A'], ['A', 'C', 'C', 'C', 'A'], ['D', 'C', 'B', 'C', 'D'], ['A', 'C', 'C', 'C', 'A'], ['A', 'A', 'D', 'A', 'A']] },
+			queenRowsByColumn: [undefined, undefined, 2, undefined, undefined]
+		},
+		{
+			board: { id: 'tutorial-descarte', label: 'Tutorial: descarte', regions: [['A', 'B', 'B', 'B', 'B'], ['C', 'C', 'B', 'C', 'C'], ['D', 'D', 'D', 'D', 'C'], ['E', 'D', 'E', 'E', 'E'], ['F', 'F', 'F', 'E', 'F']] },
+			queenRowsByColumn: [0, 3, 1, 4, 2]
+		},
+		{
+			board: { id: 'tutorial-filas-columnas', label: 'Tutorial: filas y columnas', regions: [['A', 'A', 'A', 'A', 'A'], ['A', 'A', 'C', 'A', 'A'], ['A', 'A', 'A', 'A', 'A'], ['A', 'C', 'C', 'C', 'A'], ['A', 'A', 'A', 'A', 'A']] },
+			queenRowsByColumn: [undefined, 3, 1, undefined, undefined]
+		}
+	];
+
+	function tutorialInitialCells(queenRowsByColumn: Array<number | undefined>): CellState[] {
+		const size = queenRowsByColumn.length;
+		const cells = Array.from({ length: size ** 2 }, () => 'empty' as CellState);
+		queenRowsByColumn.forEach((row, column) => {
+			if (row !== undefined) cells[row * size + column] = 'queen';
+		});
+		return cells;
+	}
+
+	const tutorialInitialStates = tutorialBoards.map((tutorial) => tutorialInitialCells(tutorial.queenRowsByColumn));
 
 	onMount(() => {
 		const stored = localStorage.getItem('queens-demo-emails');
@@ -73,11 +94,8 @@
 		puzzlePosition = 0;
 		moveCount = 0;
 		tutorialStep = 1;
-		tutorialCenterClicks = 0;
 		tutorialMarkedNeighbors = [];
 		tutorialDragComplete = false;
-		tutorialCandidate = false;
-		tutorialDeduction = false;
 		screen = 'overview';
 	}
 
@@ -109,38 +127,23 @@
 		screen = 'hub';
 	}
 
-	function tutorialCellClass(index: number) {
+	function tutorialCellClass(index: number, state: CellState) {
 		if (index === 12) return 'tutorial-queen';
-		if ([6, 7, 8, 11, 13, 16, 17, 18].includes(index)) return tutorialMarkedNeighbors.includes(index) ? 'tutorial-marked' : 'tutorial-neighbor';
-		if (tutorialDragComplete && (Math.floor(index / 5) === 2 || index % 5 === 2)) return 'tutorial-dragged';
+		if ([6, 7, 8, 11, 13, 16, 17, 18].includes(index)) return state === 'mark' ? 'tutorial-marked' : 'tutorial-neighbor';
 		return '';
 	}
 
-	function clickTutorialCell(index: number) {
-		if (index === 12 && tutorialCenterClicks < 2) {
-			tutorialCenterClicks += 1;
-			return;
+	function trackTutorialFirstMovement(movement: BoardMovement) {
+		for (const change of movement.changes) {
+			if ([6, 7, 8, 11, 13, 16, 17, 18].includes(change.index)) {
+				tutorialMarkedNeighbors = change.next === 'mark'
+					? [...new Set([...tutorialMarkedNeighbors, change.index])]
+					: tutorialMarkedNeighbors.filter((index) => index !== change.index);
+			}
 		}
-		if (tutorialCenterClicks === 2 && [6, 7, 8, 11, 13, 16, 17, 18].includes(index) && !tutorialMarkedNeighbors.includes(index)) {
-			tutorialMarkedNeighbors = [...tutorialMarkedNeighbors, index];
+		if (movement.type === 'drag' && tutorialMarkedNeighbors.length === 8 && movement.changes.length > 0) {
+			tutorialDragComplete = true;
 		}
-	}
-
-	function startTutorialDrag(event: PointerEvent) {
-		if (tutorialCenterClicks === 2 && tutorialMarkedNeighbors.length === 8) {
-			tutorialDragStart = { x: event.clientX, y: event.clientY };
-		}
-	}
-
-	function moveTutorialDrag(event: PointerEvent) {
-		if (!tutorialDragStart || tutorialDragComplete) return;
-		if (Math.hypot(event.clientX - tutorialDragStart.x, event.clientY - tutorialDragStart.y) >= 12) tutorialDragComplete = true;
-	}
-
-	function tutorialCellText(index: number) {
-		if (index === 12) return tutorialCenterClicks === 0 ? '' : tutorialCenterClicks === 1 ? 'X' : 'Q';
-		if (tutorialMarkedNeighbors.includes(index) || (tutorialDragComplete && (Math.floor(index / 5) === 2 || index % 5 === 2))) return 'X';
-		return '';
 	}
 
 	async function uploadBoard(event: Event) {
@@ -222,35 +225,20 @@
 			{#if tutorialStep === 1}
 				<h2>Una reina bloquea sus celdas contiguas</h2>
 				<p>Debe haber una, y solo una, reina por fila y por columna. Las reinas no pueden estar en celdas contiguas, ni siquiera en diagonal.</p>
-				<p>Primero presiona dos veces la celda morada del centro: ahi hay una reina.</p>
-				<div class="tutorial-grid five">
-					{#each Array.from({ length: 25 }) as _, index}
-						<button type="button" class={tutorialCellClass(index)} onclick={() => clickTutorialCell(index)} onpointerdown={startTutorialDrag} onpointermove={moveTutorialDrag} onpointerup={() => tutorialDragStart = null}>{tutorialCellText(index)}</button>
-					{/each}
-				</div>
-				{#if tutorialCenterClicks === 2 && tutorialMarkedNeighbors.length < 8}<p>Ahora marca con X las ocho celdas que rodean a la reina.</p>{/if}
-				{#if tutorialCenterClicks === 2 && tutorialMarkedNeighbors.length === 8 && !tutorialDragComplete}<p>Ahora arrastra con el dedo o mouse para marcar una fila y una columna.</p>{/if}
+				<p>La reina morada ya esta indicada. Marca con X las ocho celdas que la rodean y luego arrastra para practicar el gesto de marcado.</p>
+				<QueensBoard board={tutorialBoards[0].board} initialCells={tutorialInitialStates[0]} cellClass={tutorialCellClass} onmove={trackTutorialFirstMovement} />
+				{#if tutorialMarkedNeighbors.length === 8 && !tutorialDragComplete}<p>Ahora arrastra con el dedo o mouse sobre celdas vacias para practicar el gesto de marcado.</p>{/if}
 				<button disabled={!tutorialFirstComplete} onclick={() => tutorialStep = 2}>Siguiente</button>
 			{:else if tutorialStep === 2}
 				<h2>Descartar para encontrar una reina</h2>
-				<p>La reina en 1,1 bloquea sus celdas contiguas. Las celdas verdes ya descartadas dejan una unica celda verde disponible: marquela como reina.</p>
-				<div class="tutorial-grid three">
-					{#each Array.from({ length: 9 }) as _, index}
-						<button type="button" class:mini-queen={index === 0} class:mini-marked={[3, 4, 6, 7].includes(index)} class:mini-candidate={index === 8} onclick={() => { if (index === 8) tutorialCandidate = true; }}>{index === 0 ? 'Q' : [3, 4, 6, 7].includes(index) ? 'X' : index === 8 && tutorialCandidate ? 'Q' : ''}</button>
-					{/each}
-				</div>
-				<button disabled={!tutorialCandidate} onclick={() => tutorialStep = 3}>Siguiente</button>
+				<p>Los colores representan regiones. Observa como las cinco reinas indicadas ocupan filas, columnas y regiones diferentes, sin tocarse entre si.</p>
+				<QueensBoard board={tutorialBoards[1].board} initialCells={tutorialInitialStates[1]} disabled />
+				<button onclick={() => tutorialStep = 3}>Siguiente</button>
 			{:else}
 				<h2>Una reina por fila y columna</h2>
-				<p>En la fila verde todas las celdas estan marcadas excepto la central: debe haber al menos una reina en cada fila y columna. En la fila inferior, las celdas laterales estan marcadas porque solo puede haber una reina por fila y columna.</p>
-				<div class="tutorial-grid five">
-					{#each Array.from({ length: 25 }) as _, index}
-						{@const row = Math.floor(index / 5)}
-						{@const column = index % 5}
-						<button type="button" class:mini-row={row === 1} class:mini-marked={(row === 1 && column !== 2) || (row === 3 && (column === 0 || column === 4))} class:mini-candidate={(row === 1 && column === 2) || (row === 3 && column === 2)} onclick={() => { if (row === 1 && column === 2) tutorialDeduction = true; }}>{((row === 1 && column !== 2) || (row === 3 && (column === 0 || column === 4))) ? 'X' : row === 1 && column === 2 && tutorialDeduction ? 'Q' : ''}</button>
-					{/each}
-				</div>
-				<button disabled={!tutorialDeduction} onclick={() => screen = 'prepare'}>Finalizar tutorial</button>
+				<p>Las referencias moradas muestran celdas que debes considerar al descartar opciones por fila, columna, region y contacto diagonal. Una referencia parcial no es una solucion completa.</p>
+				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialInitialStates[2]} disabled />
+				<button onclick={() => screen = 'prepare'}>Finalizar tutorial</button>
 			{/if}
 		</section>
 	{:else if screen === 'prepare' || screen === 'transition'}
@@ -262,7 +250,7 @@
 	{:else if screen === 'puzzle'}
 		<section class="game-layout">
 			<div class="game-meta"><span>Tarea {puzzlePosition + 1} de 3</span><span>Movimientos: {moveCount}</span><span>Tiempo demo: sin limite</span></div>
-			<QueensBoard puzzle={activePuzzle} onmove={() => moveCount += 1} />
+			<QueensBoard board={activePuzzle} onmove={() => moveCount += 1} />
 			<button onclick={finishPuzzle}>Finalizar tarea de demostracion</button>
 		</section>
 	{:else if screen === 'complete'}
@@ -274,7 +262,7 @@
 	{:else if screen === 'free-play'}
 		<section class="game-layout">
 			<div class="game-meta"><span>Juego libre</span><span>Movimientos: {freeMoves}</span><span>Sin limite temporal</span></div>
-			<QueensBoard puzzle={freePuzzle} onmove={() => freeMoves += 1} />
+			<QueensBoard board={freePuzzle} onmove={() => freeMoves += 1} />
 			<button onclick={stopFreePlay}>Terminar juego libre</button>
 		</section>
 	{:else if screen === 'settings'}
@@ -284,7 +272,7 @@
 			<h3>Tableros publicados</h3>
 			<ul>{#each allPuzzles as puzzle}<li>{puzzle.label}: {puzzle.availability}, {puzzle.status}</li>{/each}</ul>
 			<h3>Subir tablero JSON</h3>
-			<p>Seleccione un archivo con <code>id</code>, <code>label</code>, <code>availability</code>, <code>regions</code> y <code>queenRowsByColumn</code>. Se comprueban nueve regiones A-I conexas y una posicion valida para las nueve reinas.</p>
+			<p>Seleccione un archivo con <code>id</code>, <code>label</code>, <code>availability</code>, <code>regions</code> y <code>queenRowsByColumn</code>. Juego libre admite matrices cuadradas; los tableros experimentales siguen siendo exclusivamente de 9 por 9.</p>
 			<input type="file" accept="application/json,.json" onchange={uploadBoard} />
 			{#if uploadMessage}<p class="upload-message">{uploadMessage}</p>{/if}
 			<button onclick={() => screen = 'hub'}>Volver</button>

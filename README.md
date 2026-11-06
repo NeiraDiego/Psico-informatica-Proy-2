@@ -39,6 +39,8 @@ El reconocimiento de regreso se guarda solo en `localStorage` y contiene unicame
 | `src/styles.css` | Estilos de la interfaz. |
 | `.env.example` | Forma prevista de declarar correos autorizados en servidor. |
 
+`QueensBoard` admite cualquier matriz cuadrada de regiones y se reutiliza en el tutorial 5x5. La carga de juego libre acepta cualquier tablero cuadrado; la carga de tableros experimentales permanece deliberadamente restringida a 9x9 por el protocolo.
+
 ## Modo libre y configuracion
 
 - Una persona que vuelve con el mismo correo puede abrir **Juego libre**, que escoge aleatoriamente uno de los diez tableros del catálogo y no limita el tiempo. Sus movimientos no se guardan todavía.
@@ -46,7 +48,9 @@ El reconocimiento de regreso se guarda solo en `localStorage` y contiene unicame
 - **Configuracion** se muestra solo para el correo sintético indicado arriba. La version definitiva consultara `ADMIN_EMAILS` exclusivamente en el servidor. La coincidencia de correo sin verificacion no es autenticacion robusta y no debe dar acceso a historiales ni datos de participantes.
 - La configuracion todavia no persiste ni publica cambios. La carga definitiva validara matriz 9x9, nueve regiones, conectividad y soluciones, y publicara versiones nuevas sin alterar sesiones historicas.
 
-Actualmente Configuracion permite cargar un JSON **solo durante la pagina abierta** para probar un tablero en juego libre. Puede ser un tablero individual o un catalogo cuyo objeto raiz contiene `boards`. El archivo `data/queensgame-9x9.json` es un catalogo listo para cargar. Cada tablero debe contener `regions`, una matriz de nueve filas de nueve letras entre `A` e `I`; cada letra representa una region y debe formar una zona conexa por sus lados. `queenRowsByColumn` es una lista de nueve filas, una para cada columna de izquierda a derecha, que indica la fila (de 1 a 9) donde se ubica la reina de la solucion declarada:
+Actualmente Configuracion permite cargar un JSON **solo durante la pagina abierta** para probar un tablero en juego libre. Puede ser un tablero individual o un catalogo cuyo objeto raiz contiene `boards`. El archivo `data/queensgame-9x9.json` es un catalogo listo para cargar. Cada tablero debe contener `regions`, una matriz cuadrada de letras mayusculas; cada letra representa una region y debe formar una zona conexa por sus lados. Debe haber tantas regiones como filas. `queenRowsByColumn` es una lista con una entrada por columna, de izquierda a derecha, que indica la fila donde se ubica la reina de la solucion declarada.
+
+Los tableros marcados como `experimental` o `both` deben ser 9x9 y usar las regiones `A` a `I`. Los tableros solo de `free_play` pueden tener otro tamano cuadrado y usar letras hasta `Z`:
 
 ```json
 {

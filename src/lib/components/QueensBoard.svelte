@@ -1,26 +1,31 @@
 <script lang="ts">
-	import type { CellState, PuzzleDefinition } from '$lib/domain/types';
+	import type { BoardDefinition, BoardChange, BoardMovement, CellState } from '$lib/domain/types';
 
 	let {
-		puzzle,
+		board,
 		disabled = false,
-		onmove
+		onmove,
+		cellClass,
+		initialCells
 	}: {
-		puzzle: PuzzleDefinition;
+		board: BoardDefinition;
 		disabled?: boolean;
-		onmove?: () => void;
+		onmove?: (movement: BoardMovement) => void;
+		cellClass?: (index: number, state: CellState) => string;
+		initialCells?: CellState[];
 	} = $props();
 
-	let cells = $state<CellState[]>(Array.from({ length: 81 }, () => 'empty'));
+	let cells = $state<CellState[]>([]);
 	let dragStart = $state<{ x: number; y: number; index: number } | null>(null);
 	let dragging = $state(false);
 	let dragChanges = $state(0);
 	let visitedCells = new Set<number>();
 	let suppressClick = false;
+	const size = $derived(board.regions.length);
 
 	$effect(() => {
-		puzzle.id;
-		cells = Array.from({ length: 81 }, () => 'empty');
+		board.id;
+		cells = initialCells ? [...initialCells] : Array.from({ length: board.regions.length ** 2 }, () => 'empty');
 	});
 
 	function nextState(cell: CellState): CellState {
@@ -29,15 +34,18 @@
 
 	function updateCell(index: number) {
 		if (disabled) return;
-		cells[index] = nextState(cells[index]);
-		onmove?.();
+		const previous = cells[index];
+		const next = nextState(previous);
+		cells[index] = next;
+		onmove?.({ type: 'click', changes: [{ index, previous, next }] });
 	}
 
-	function markForDrag(index: number) {
-		if (visitedCells.has(index) || cells[index] !== 'empty') return;
+	function markForDrag(index: number): BoardChange | undefined {
+		if (visitedCells.has(index) || cells[index] !== 'empty') return undefined;
 		visitedCells.add(index);
 		cells[index] = 'mark';
 		dragChanges += 1;
+		return { index, previous: 'empty', next: 'mark' };
 	}
 
 	function startPointer(event: PointerEvent, index: number) {
@@ -63,7 +71,10 @@
 	function finishPointer() {
 		if (dragging) {
 			suppressClick = true;
-			if (dragChanges > 0) onmove?.();
+			if (dragChanges > 0) {
+				const changes = [...visitedCells].map((index) => ({ index, previous: 'empty' as const, next: 'mark' as const }));
+				onmove?.({ type: 'drag', changes });
+			}
 		}
 		dragStart = null;
 		dragging = false;
@@ -78,14 +89,15 @@
 	}
 </script>
 
-<div class="board" aria-label={puzzle.label}>
+<div class:mini-board={size < 9} class="board" style={`--board-size: ${size}`} aria-label={board.label}>
 	{#each cells as cell, index}
-		{@const row = Math.floor(index / 9)}
-		{@const column = index % 9}
-		{@const regionIndex = puzzle.regions[row][column].charCodeAt(0) - 64}
+		{@const row = Math.floor(index / size)}
+		{@const column = index % size}
+		{@const regionIndex = board.regions[row][column].charCodeAt(0) - 64}
 		<button
 			type="button"
 			data-cell-index={index}
+			class={cellClass?.(index, cell)}
 			class:marked={cell === 'mark'}
 			class:queen={cell === 'queen'}
 			disabled={disabled}
@@ -102,4 +114,6 @@
 	{/each}
 </div>
 
-<p class="board-help">Clic para alternar vacia, X y reina. Arrastre sobre celdas vacias para marcar X; todo el gesto cuenta como un movimiento.</p>
+{#if size === 9}
+	<p class="board-help">Clic para alternar vacia, X y reina. Arrastre sobre celdas vacias para marcar X; todo el gesto cuenta como un movimiento.</p>
+{/if}
