@@ -1,15 +1,20 @@
-import type { BoardAvailability, PuzzleDefinition } from './types';
+import type { BoardAvailability, PuzzleDefinition, PuzzleDifficulty } from './types';
 
 type UploadPayload = {
 	id?: unknown;
 	label?: unknown;
 	availability?: unknown;
+	difficulty?: unknown;
 	regions?: unknown;
 	queenRowsByColumn?: unknown;
 };
 
 function isAvailability(value: unknown): value is BoardAvailability {
 	return value === 'experimental' || value === 'free_play' || value === 'both';
+}
+
+function isDifficulty(value: unknown): value is PuzzleDifficulty {
+	return value === 'easy' || value === 'medium' || value === 'hard' || value === 'expert';
 }
 
 function hasConnectedRegions(regions: string[][], regionIds: string[]) {
@@ -55,6 +60,7 @@ export function validateUploadedBoard(payload: UploadPayload): { puzzle?: Puzzle
 	}
 	if (typeof payload.label !== 'string' || !payload.label.trim()) return { error: 'El tablero necesita un nombre.' };
 	if (!isAvailability(payload.availability)) return { error: 'La disponibilidad debe ser experimental, free_play o both.' };
+	if (payload.difficulty !== undefined && !isDifficulty(payload.difficulty)) return { error: 'La dificultad debe ser easy, medium, hard o expert.' };
 	if (!Array.isArray(payload.regions) || payload.regions.length < 2) {
 		return { error: 'La matriz regions debe ser cuadrada y tener al menos 2 filas.' };
 	}
@@ -82,6 +88,7 @@ export function validateUploadedBoard(payload: UploadPayload): { puzzle?: Puzzle
 			label: payload.label.trim(),
 			availability: payload.availability,
 			status: 'pending_validation',
+			difficulty: payload.difficulty,
 			regions,
 			queenRowsByColumn
 		}

@@ -1,12 +1,13 @@
-import type { BoardAvailability, Group, PuzzleDefinition, PuzzleStatus } from '$lib/domain/types';
+import type { BoardAvailability, Group, PuzzleDefinition, PuzzleDifficulty, PuzzleStatus } from '$lib/domain/types';
 import queensGameCatalog from '../../../data/queensgame-9x9.json';
 
 export const demoPuzzles: PuzzleDefinition[] = queensGameCatalog.boards.map((board) => ({
 	id: board.id,
 	version: board.version,
 	label: board.label,
-	availability: board.availability as BoardAvailability,
-	status: board.status as PuzzleStatus,
+		availability: board.availability as BoardAvailability,
+		status: board.status as PuzzleStatus,
+		difficulty: board.source.difficulty as PuzzleDifficulty,
 	regions: board.regions,
 	queenRowsByColumn: board.queenRowsByColumn
 }));

@@ -6,7 +6,7 @@
 	import { isSolved } from '$lib/domain/queens-rules';
 	import { addMovement, completeAttempt, createAttempt, type AttemptDraft, type CompletedAttempt } from '$lib/experiment/measurement';
 	import { DEMO_ADMIN_EMAIL, demoPuzzles, getPuzzle, groupCWarning, pickDemoGroup } from '$lib/protocol/demo';
-	import type { BoardDefinition, BoardMovement, CellState, Group, PuzzleDefinition } from '$lib/domain/types';
+	import type { BoardDefinition, BoardMovement, CellState, Group, PuzzleDefinition, PuzzleDifficulty } from '$lib/domain/types';
 
 	type Screen = 'register' | 'hub' | 'overview' | 'tutorial' | 'prepare' | 'puzzle' | 'transition' | 'complete' | 'free-play' | 'settings';
 
@@ -37,6 +37,8 @@
 	let uploadMessage = $state('');
 	let showBoardCatalog = $state(false);
 	let participantName = $state('');
+	let additionalInfoGroups = $state<Record<Group, boolean>>({ A: false, B: false, C: true, D: false });
+	let freePlayDifficulty = $state<PuzzleDifficulty | null>(null);
 	let experimentConfig = $state({
 		groupCount: 3,
 		puzzleCount: 3,
@@ -52,6 +54,7 @@
 	const allPuzzles = $derived([...demoPuzzles, ...uploadedPuzzles]);
 	const activeGroups = $derived((['A', 'B', 'C', 'D'] as Group[]).slice(0, experimentConfig.groupCount));
 	const activePuzzle = $derived(getPuzzle(experimentConfig.assignments[group][puzzlePosition]));
+	const difficultyOptions: Array<{ value: PuzzleDifficulty; label: string }> = [{ value: 'easy', label: 'Fácil' }, { value: 'medium', label: 'Medio' }, { value: 'hard', label: 'Difícil' }, { value: 'expert', label: 'Experto' }];
 	const tutorialFirstComplete = $derived(tutorialMarkedNeighbors.length === 8 && tutorialDragComplete);
 	const tutorialBoards: Array<{ board: BoardDefinition; queenRowsByColumn: Array<number | undefined> }> = [
 		{
@@ -286,9 +289,34 @@
 		exportMessage = `Se descargaron ${movements.length} movimientos pendientes.`;
 	}
 
-	function openFreePlay() {
-		const available = allPuzzles.filter((puzzle) => puzzle.availability === 'free_play' || puzzle.availability === 'both');
+	function exportCurrentAttempts() {
+		if (!completedAttempts.length) {
+			exportMessage = 'No hay intentos de la sesión actual para descargar.';
+			return;
+		}
+		downloadCsv('queens-sesion-actual-intentos.csv', ['client_attempt_id', 'puzzle_id', 'puzzle_version', 'position', 'is_primary_outcome', 'started_at_client', 'ended_at_client', 'duration_ms', 'time_limit_ms', 'outcome', 'success', 'total_moves', 'movement_latencies_ms', 'final_board'], completedAttempts.map((attempt) => [attempt.client_attempt_id, attempt.puzzle_id, attempt.puzzle_version, attempt.position, attempt.is_primary_outcome, attempt.started_at_client, attempt.ended_at_client, attempt.duration_ms, attempt.time_limit_ms, attempt.outcome, attempt.success, attempt.total_moves, attempt.movement_latencies_ms, attempt.final_board]));
+		exportMessage = `Se descargaron ${completedAttempts.length} intentos de la sesión actual.`;
+	}
+
+	function exportCurrentMovements() {
+		const movements = completedAttempts.flatMap((attempt) => attempt.movements.map((movement) => [attempt.client_attempt_id, movement.index, movement.type, movement.started_at_ms, movement.ended_at_ms, movement.duration_ms, movement.latency_ms, movement.changes, movement.closure]));
+		if (!movements.length) {
+			exportMessage = 'No hay movimientos de la sesión actual para descargar.';
+			return;
+		}
+		downloadCsv('queens-sesion-actual-movimientos.csv', ['client_attempt_id', 'index', 'type', 'started_at_ms', 'ended_at_ms', 'duration_ms', 'latency_ms', 'changes', 'closure'], movements);
+		exportMessage = `Se descargaron ${movements.length} movimientos de la sesión actual.`;
+	}
+
+	function freePlayPuzzles(difficulty: PuzzleDifficulty | null) {
+		return allPuzzles.filter((puzzle) => (puzzle.availability === 'free_play' || puzzle.availability === 'both') && (!difficulty || puzzle.difficulty === difficulty));
+	}
+
+	function openFreePlay(difficulty: PuzzleDifficulty | null = null) {
+		const available = freePlayPuzzles(difficulty);
+		if (!available.length) return;
 		freePuzzle = available[Math.floor(Math.random() * available.length)];
+		freePlayDifficulty = difficulty;
 		freeMoves = 0;
 		freeStartedAt = performance.now();
 		elapsedMs = 0;
@@ -298,6 +326,10 @@
 	function stopFreePlay() {
 		elapsedMs = Math.round(performance.now() - freeStartedAt);
 		screen = 'hub';
+	}
+
+	function hasFreePlayPuzzle(difficulty: PuzzleDifficulty) {
+		return freePlayPuzzles(difficulty).length > 0;
 	}
 
 	function tutorialCellClass(index: number, state: CellState) {
@@ -387,7 +419,7 @@
 			<p>Puedes iniciar un nuevo experimento o jugar sin límite temporal. No se muestran intentos anteriores.</p>
 			<div class="actions">
 				<button onclick={beginExperiment}>Iniciar experimento</button>
-				<button class="secondary" onclick={openFreePlay}>Juego libre</button>
+				<button class="secondary" onclick={() => openFreePlay()}>Juego libre</button>
 				{#if isDemoAdmin}<button class="secondary" onclick={() => screen = 'settings'}>Configuración</button>{/if}
 			</div>
 		</section>
@@ -396,7 +428,7 @@
 			<h2>Información general</h2>
 			<p>Resolverás {experimentConfig.puzzleCount} tableros. Cada tarea tendrá un límite de 120 segundos.</p>
 			{#if sessionRegistrationStatus === 'idle'}<p class="notice">La sesión quedó pendiente de registro en el servidor. Los intentos se conservarán localmente hasta poder enviarse.</p>{/if}
-			{#if group === 'C'}<p class="warning">{groupCWarning}</p>{/if}
+			{#if additionalInfoGroups[group]}<p class="warning">{groupCWarning}</p>{/if}
 			<button onclick={() => screen = 'tutorial'}>Ver tutorial</button>
 		</section>
 	{:else if screen === 'tutorial'}
@@ -408,7 +440,7 @@
 				<p>Marca con X, haciendo un solo clic, en las cuatro celdas verde oscuro de los bordes. Luego haz clic en cualquiera de las ocho celdas verde claro alrededor de la reina y arrastra por las demás para marcarlas en un solo movimiento.</p>
 				<QueensBoard board={tutorialBoards[0].board} initialCells={tutorialInitialStates[0]} cellClass={tutorialCellClass} onmove={trackTutorialFirstMovement} />
 				{#if tutorialMarkedNeighbors.length === 8 && !tutorialDragComplete}<p>Ahora arrastra con el dedo o mouse sobre celdas vacías para practicar el gesto de marcado.</p>{/if}
-				<button disabled={!tutorialFirstComplete} onclick={() => tutorialStep = 2}>Siguiente</button>
+				<div class="actions"><button disabled={!tutorialFirstComplete} onclick={() => tutorialStep = 2}>Siguiente</button><button class="secondary" onclick={() => screen = 'register'}>Volver al menú inicial</button></div>
 			{:else if tutorialStep === 2}
 				<h2>Descartar para encontrar una reina</h2>
 				<p>Los colores representan regiones. Debe haber una, y solo una, reina por región.</p>
@@ -419,7 +451,7 @@
 					{#if tutorialTwoProgress >= 2}<li class:completed={tutorialTwoComplete}>Repite hasta encontrar todas las reinas.</li>{/if}
 				</ol>
 				<QueensBoard board={tutorialBoards[1].board} initialCells={tutorialTwoInitialCells} onmove={trackTutorialTwoMovement} />
-				<button disabled={!tutorialTwoComplete} onclick={() => tutorialStep = 3}>Siguiente</button>
+				<div class="actions"><button disabled={!tutorialTwoComplete} onclick={() => tutorialStep = 3}>Siguiente</button><button class="secondary" onclick={() => screen = 'register'}>Volver al menú inicial</button></div>
 			{:else}
 				<h2>Una reina por fila y columna</h2>
 				<ol class="tutorial-steps">
@@ -428,7 +460,7 @@
 					{#if tutorialThreeGreenQueen}<li class:completed={tutorialThreeComplete}>Si todas las celdas de un color están en una sola fila o columna, la reina de esa fila o columna debe ser de ese color. Por lo tanto, en la fila 4 puedes marcar con X las celdas de los extremos.</li>{/if}
 				</ol>
 				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialThreeInitialCells} onmove={trackTutorialThreeMovement} />
-				<button disabled={!tutorialThreeComplete} onclick={() => screen = 'prepare'}>Comenzar experimento</button>
+				<div class="actions"><button disabled={!tutorialThreeComplete} onclick={() => screen = 'prepare'}>Comenzar experimento</button><button class="secondary" onclick={() => screen = 'register'}>Volver al menú inicial</button></div>
 			{/if}
 		</section>
 	{:else if screen === 'prepare' || screen === 'transition'}
@@ -448,13 +480,14 @@
 			<h2>Experimento finalizado</h2>
 			<p>{deliveryStatus === 'sent' ? 'Resultados enviados.' : 'Resultados guardados localmente y pendientes de envío.'}</p>
 			<p>Se registraron {completedAttempts.length} intentos. El cierre, consentimiento y explicación final son borradores.</p>
-			<div class="actions"><button onclick={() => screen = 'hub'}>Opciones de regreso</button>{#if isDemoAdmin}<button class="secondary" onclick={() => screen = 'settings'}>Configuración</button>{/if}</div>
+			<p>A algunos participantes, elegidos al azar, se les presentaron tableros con dificultades artificialmente altas para ver cómo esto influía en tableros posteriores. Te invitamos a que juegues libremente tableros reales con dificultades reales cuando quieras, entrando con tu correo electrónico a esta misma página.</p>
+			<div class="actions"><button onclick={() => openFreePlay()}>Juego libre</button><button class="secondary" onclick={() => screen = 'hub'}>Opciones de regreso</button>{#if isDemoAdmin}<button class="secondary" onclick={() => screen = 'settings'}>Configuración</button>{/if}</div>
 		</section>
 	{:else if screen === 'free-play'}
 		<section class="game-layout">
-			<div class="game-meta"><span>Juego libre</span><span>Movimientos: {freeMoves}</span><span>Sin límite temporal</span></div>
+			<div class="game-meta"><span>Juego libre{freePlayDifficulty ? `: ${difficultyOptions.find((option) => option.value === freePlayDifficulty)?.label}` : ''}</span><span>Movimientos: {freeMoves}</span><span>Sin límite temporal</span></div>
 			<QueensBoard board={freePuzzle} onmove={() => freeMoves += 1} />
-			<button onclick={stopFreePlay}>Terminar juego libre</button>
+			<div class="actions"><button onclick={stopFreePlay}>Terminar juego libre</button>{#each difficultyOptions as option}<button class="secondary" disabled={!hasFreePlayPuzzle(option.value)} onclick={() => openFreePlay(option.value)}>Nuevo tablero: {option.label}</button>{/each}</div>
 		</section>
 	{:else if screen === 'settings'}
 		<section class="panel">
@@ -476,6 +509,9 @@
 					</select>
 				</label>
 			</div>
+			<h3>Información adicional</h3>
+			<p>Selecciona los grupos a los que se les mostrará la información adicional antes del tutorial.</p>
+			<div class="checkboxes">{#each activeGroups as groupCode}<label><input type="checkbox" bind:checked={additionalInfoGroups[groupCode]} /> Grupo {groupCode}</label>{/each}</div>
 			{#each activeGroups as groupCode}
 				<h3>Grupo {groupCode}</h3>
 				<div class="settings-grid">
@@ -494,8 +530,8 @@
 			{#if showBoardCatalog}<ul>{#each allPuzzles as puzzle}<li>{puzzle.label}: {puzzle.regions.length}x{puzzle.regions.length}, {puzzle.availability}</li>{/each}</ul>{/if}
 			{#if uploadMessage}<p class="upload-message">{uploadMessage}</p>{/if}
 			<h3>Respaldo local</h3>
-			<p>Descarga los registros que siguen pendientes en este navegador. Los archivos no incluyen nombre ni correo.</p>
-			<div class="actions"><button class="secondary" onclick={exportPendingAttempts}>Descargar intentos CSV</button><button class="secondary" onclick={exportPendingMovements}>Descargar movimientos CSV</button></div>
+			<p>Descarga los registros pendientes o la sesión actual. Los archivos no incluyen nombre ni correo.</p>
+			<div class="actions"><button class="secondary" onclick={exportPendingAttempts}>Descargar intentos pendientes</button><button class="secondary" onclick={exportPendingMovements}>Descargar movimientos pendientes</button><button class="secondary" onclick={exportCurrentAttempts}>Descargar intentos de sesión actual</button><button class="secondary" onclick={exportCurrentMovements}>Descargar movimientos de sesión actual</button></div>
 			{#if exportMessage}<p class="upload-message">{exportMessage}</p>{/if}
 			<button onclick={() => screen = 'hub'}>Volver</button>
 		</section>

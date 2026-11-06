@@ -1,6 +1,7 @@
 export type Group = 'A' | 'B' | 'C' | 'D';
 export type BoardAvailability = 'experimental' | 'free_play' | 'both';
 export type PuzzleStatus = 'solvable' | 'unsolvable' | 'pending_validation';
+export type PuzzleDifficulty = 'easy' | 'medium' | 'hard' | 'expert';
 export type CellState = 'empty' | 'mark' | 'queen';
 
 export interface BoardDefinition {
@@ -13,6 +14,7 @@ export interface PuzzleDefinition extends BoardDefinition {
 	version: string;
 	availability: BoardAvailability;
 	status: PuzzleStatus;
+	difficulty?: PuzzleDifficulty;
 	/** Fila (1 al tamaño del tablero) de la reina de cada columna, de izquierda a derecha. */
 	queenRowsByColumn: number[];
 }
