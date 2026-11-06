@@ -5,7 +5,7 @@
 	import { validateUploadedBoard } from '$lib/domain/board-validation';
 	import { isSolved } from '$lib/domain/queens-rules';
 	import { addMovement, completeAttempt, createAttempt, type AttemptDraft, type CompletedAttempt } from '$lib/experiment/measurement';
-	import { DEMO_ADMIN_EMAIL, demoPuzzles, demoSequences, getPuzzle, pickDemoGroup } from '$lib/protocol/demo';
+	import { DEMO_ADMIN_EMAIL, demoPuzzles, getPuzzle, groupCWarning, pickDemoGroup } from '$lib/protocol/demo';
 	import type { BoardDefinition, BoardMovement, CellState, Group, PuzzleDefinition } from '$lib/domain/types';
 
 	type Screen = 'register' | 'hub' | 'overview' | 'tutorial' | 'prepare' | 'puzzle' | 'transition' | 'complete' | 'free-play' | 'settings';
@@ -33,11 +33,23 @@
 	let elapsedMs = $state(0);
 	let uploadedPuzzles = $state<PuzzleDefinition[]>([]);
 	let uploadMessage = $state('');
+	let showBoardCatalog = $state(false);
+	let participantName = $state('');
+	let experimentConfig = $state({
+		groupCount: 3,
+		puzzleCount: 3,
+		assignments: {
+			A: ['queensgame-16', 'queensgame-22', 'queensgame-47'],
+			B: ['queensgame-58', 'queensgame-60', 'queensgame-47'],
+			C: ['queensgame-58', 'queensgame-60', 'queensgame-47'],
+			D: ['queensgame-16', 'queensgame-22', 'queensgame-47']
+		} as Record<Group, string[]>
+	});
 
 	const isDemoAdmin = $derived(email.trim().toLowerCase() === DEMO_ADMIN_EMAIL);
 	const allPuzzles = $derived([...demoPuzzles, ...uploadedPuzzles]);
-	const sequence = $derived(demoSequences[group]);
-	const activePuzzle = $derived(getPuzzle(sequence.puzzleIds[puzzlePosition]));
+	const activeGroups = $derived((['A', 'B', 'C', 'D'] as Group[]).slice(0, experimentConfig.groupCount));
+	const activePuzzle = $derived(getPuzzle(experimentConfig.assignments[group][puzzlePosition]));
 	const tutorialFirstComplete = $derived(tutorialMarkedNeighbors.length === 8 && tutorialDragComplete);
 	const tutorialBoards: Array<{ board: BoardDefinition; queenRowsByColumn: Array<number | undefined> }> = [
 		{
@@ -114,15 +126,15 @@
 		email = normalized;
 		if (!returning) {
 			sessionRegistrationStatus = 'pending';
-			const serverGroup = await registerServerSession(name.trim(), normalized);
-			group = serverGroup ?? pickDemoGroup();
+			const serverGroup = await registerServerSession(name.trim(), normalized, experimentConfig.groupCount, participantName.trim() || null);
+			group = serverGroup ?? pickDemoGroup(experimentConfig.groupCount);
 			sessionRegistrationStatus = serverGroup ? 'ready' : 'idle';
 		}
 		screen = returning ? 'hub' : 'overview';
 	}
 
-	async function registerServerSession(participantName: string, participantEmail: string): Promise<Group | null> {
-		const keyName = `queens-session-key:${participantEmail}`;
+	async function registerServerSession(experimenterName: string, experimenterEmail: string, groupCount: number, registeredParticipantName: string | null): Promise<Group | null> {
+		const keyName = `queens-session-key:${experimenterEmail}`;
 		let idempotencyKey = localStorage.getItem(keyName);
 		if (!idempotencyKey) {
 			idempotencyKey = crypto.randomUUID();
@@ -132,7 +144,7 @@
 			const response = await fetch('/api/sessions', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ name: participantName, email: participantEmail, idempotency_key: idempotencyKey }),
+				body: JSON.stringify({ name: experimenterName, email: experimenterEmail, participant_name: registeredParticipantName, idempotency_key: idempotencyKey, group_count: groupCount }),
 				credentials: 'same-origin'
 			});
 			if (!response.ok) return null;
@@ -144,7 +156,7 @@
 	}
 
 	function beginExperiment() {
-		group = pickDemoGroup();
+		if (!activeGroups.includes(group)) group = pickDemoGroup(experimentConfig.groupCount);
 		puzzlePosition = 0;
 		moveCount = 0;
 		tutorialStep = 1;
@@ -156,7 +168,7 @@
 	function openPuzzle() {
 		moveCount = 0;
 		const startedAt = performance.now();
-		activeAttempt = createAttempt(activePuzzle, puzzlePosition + 1, startedAt, 120000);
+		activeAttempt = createAttempt(activePuzzle, puzzlePosition + 1, startedAt, 120000, puzzlePosition + 1 === experimentConfig.puzzleCount);
 		timeRemainingMs = 120000;
 		puzzleLocked = false;
 		screen = 'puzzle';
@@ -169,7 +181,7 @@
 		completedAttempts = [...completedAttempts, completed];
 		void saveAttempt(completed);
 		activeAttempt = null;
-		if (puzzlePosition === 2) {
+		if (puzzlePosition === experimentConfig.puzzleCount - 1) {
 			screen = 'complete';
 		} else {
 			puzzlePosition += 1;
@@ -189,6 +201,21 @@
 	function formatTime(milliseconds: number) {
 		const totalSeconds = Math.ceil(milliseconds / 1000);
 		return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, '0')}`;
+	}
+
+	function resizeExperiment(groupCount: number, puzzleCount: number) {
+		experimentConfig.groupCount = groupCount;
+		experimentConfig.puzzleCount = puzzleCount;
+		const fallbackPuzzleId = allPuzzles[0]?.id ?? '';
+		for (const groupCode of ['A', 'B', 'C', 'D'] as Group[]) {
+			const assignments = experimentConfig.assignments[groupCode];
+			while (assignments.length < puzzleCount) assignments.push(fallbackPuzzleId);
+			experimentConfig.assignments[groupCode] = assignments.slice(0, puzzleCount);
+		}
+	}
+
+	function assignPuzzle(groupCode: Group, position: number, puzzleId: string) {
+		experimentConfig.assignments[groupCode][position] = puzzleId;
 	}
 
 	async function saveAttempt(attempt: CompletedAttempt) {
@@ -324,8 +351,8 @@
 			<p>El puntaje obtenido solo refleja el desempeño puntual y no pretende medir ningún tipo de inteligencia.</p>
 			<p>Al presionar Aceptar, informas que leíste y estás de acuerdo con lo anterior. Luego verás un pequeño tutorial y tres tableros que deberás resolver en 120 segundos.</p>
 			<form onsubmit={(event) => { event.preventDefault(); register(); }}>
-				<label>Nombre <input bind:value={name} autocomplete="name" required /></label>
-				<label>Correo <input bind:value={email} type="email" autocomplete="email" required /></label>
+				<label>Nombre del experimentador <input bind:value={name} autocomplete="name" required /></label>
+				<label>Correo electrónico del experimentador <input bind:value={email} type="email" autocomplete="email" required /></label>
 				<button>Aceptar y continuar</button>
 			</form>
 		</section>
@@ -342,9 +369,9 @@
 	{:else if screen === 'overview'}
 		<section class="panel">
 			<h2>Información general</h2>
-			<p>Resolverás tres tableros. Cada tarea tendrá un límite de 120 segundos.</p>
+			<p>Resolverás {experimentConfig.puzzleCount} tableros. Cada tarea tendrá un límite de 120 segundos.</p>
 			{#if sessionRegistrationStatus === 'idle'}<p class="notice">La sesión quedó pendiente de registro en el servidor. Los intentos se conservarán localmente hasta poder enviarse.</p>{/if}
-			{#if sequence.warning}<p class="warning">{sequence.warning}</p>{/if}
+			{#if group === 'C'}<p class="warning">{groupCWarning}</p>{/if}
 			<button onclick={() => screen = 'tutorial'}>Ver tutorial</button>
 		</section>
 	{:else if screen === 'tutorial'}
@@ -377,7 +404,7 @@
 		</section>
 	{:else if screen === 'puzzle'}
 		<section class="game-layout">
-			<div class="game-meta"><span>Tarea {puzzlePosition + 1} de 3</span><span>Movimientos: {moveCount}</span><span>Tiempo restante: {formatTime(timeRemainingMs)}</span></div>
+			<div class="game-meta"><span>Tarea {puzzlePosition + 1} de {experimentConfig.puzzleCount}</span><span>Movimientos: {moveCount}</span><span>Tiempo restante: {formatTime(timeRemainingMs)}</span></div>
 			<QueensBoard board={activePuzzle} disabled={puzzleLocked} onmove={recordExperimentalMovement} />
 			<button onclick={() => closeCurrentAttempt('interrupted')} disabled={puzzleLocked}>Finalizar intento</button>
 		</section>
@@ -398,11 +425,38 @@
 		<section class="panel">
 			<h2>Configuración</h2>
 			<p>Vista reservada al correo autorizado. La autorización real se resolverá en servidor mediante <code>ADMIN_EMAILS</code>. Los cambios de esta pantalla solo viven mientras esta página permanezca abierta.</p>
-			<h3>Tableros publicados</h3>
-			<ul>{#each allPuzzles as puzzle}<li>{puzzle.label}: {puzzle.availability}, {puzzle.status}</li>{/each}</ul>
+			<h3>Estructura del experimento</h3>
+			<label>Participante (en caso de ser distinto al experimentador que ingresó con correo electrónico):
+				<input bind:value={participantName} autocomplete="name" />
+			</label>
+			<div class="settings-grid">
+				<label>Grupos
+					<select value={experimentConfig.groupCount} onchange={(event) => resizeExperiment(Number(event.currentTarget.value), experimentConfig.puzzleCount)}>
+						<option value="1">1 grupo (A)</option><option value="2">2 grupos (A-B)</option><option value="3">3 grupos (A-C)</option><option value="4">4 grupos (A-D)</option>
+					</select>
+				</label>
+				<label>Tableros por experimento
+					<select value={experimentConfig.puzzleCount} onchange={(event) => resizeExperiment(experimentConfig.groupCount, Number(event.currentTarget.value))}>
+						<option value="2">2 tableros</option><option value="3">3 tableros</option><option value="4">4 tableros</option><option value="5">5 tableros</option>
+					</select>
+				</label>
+			</div>
+			{#each activeGroups as groupCode}
+				<h3>Grupo {groupCode}</h3>
+				<div class="settings-grid">
+					{#each experimentConfig.assignments[groupCode] as puzzleId, position}
+						<label>Tablero {position + 1}
+							<select value={puzzleId} onchange={(event) => assignPuzzle(groupCode, position, event.currentTarget.value)}>
+								{#each allPuzzles as puzzle}<option value={puzzle.id}>{puzzle.label}</option>{/each}
+							</select>
+						</label>
+					{/each}
+				</div>
+			{/each}
 			<h3>Subir tablero JSON</h3>
-			<p>Seleccione un archivo con <code>id</code>, <code>label</code>, <code>availability</code>, <code>regions</code> y <code>queenRowsByColumn</code>. Juego libre admite matrices cuadradas; los tableros experimentales siguen siendo exclusivamente de 9 por 9.</p>
-			<input type="file" accept="application/json,.json" onchange={uploadBoard} />
+			<p>Seleccione un archivo con <code>id</code>, <code>label</code>, <code>availability</code>, <code>regions</code> y <code>queenRowsByColumn</code>. Se admiten matrices cuadradas de cualquier tamaño.</p>
+			<div class="actions"><input type="file" accept="application/json,.json" onchange={uploadBoard} /><button class="secondary" onclick={() => showBoardCatalog = !showBoardCatalog}>{showBoardCatalog ? 'Ocultar tableros' : 'Ver tableros cargados'}</button></div>
+			{#if showBoardCatalog}<ul>{#each allPuzzles as puzzle}<li>{puzzle.label}: {puzzle.regions.length}x{puzzle.regions.length}, {puzzle.availability}</li>{/each}</ul>{/if}
 			{#if uploadMessage}<p class="upload-message">{uploadMessage}</p>{/if}
 			<h3>Respaldo local</h3>
 			<p>Descarga los registros que siguen pendientes en este navegador. Los archivos no incluyen nombre ni correo.</p>

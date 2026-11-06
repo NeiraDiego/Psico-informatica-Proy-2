@@ -1,4 +1,4 @@
-export type Group = 'A' | 'B' | 'C';
+export type Group = 'A' | 'B' | 'C' | 'D';
 export type BoardAvailability = 'experimental' | 'free_play' | 'both';
 export type PuzzleStatus = 'solvable' | 'unsolvable' | 'pending_validation';
 export type CellState = 'empty' | 'mark' | 'queen';
@@ -33,6 +33,6 @@ export interface BoardMovement {
 
 export interface ProtocolSequence {
 	group: Group;
-	puzzleIds: [string, string, string];
+	puzzleIds: string[];
 	warning?: string;
 }

@@ -35,13 +35,13 @@ export interface CompletedAttempt extends AttemptDraft {
 	movement_latencies_ms: number[];
 }
 
-export function createAttempt(puzzle: PuzzleDefinition, position: number, startedAt: number, timeLimitMs: number | null): AttemptDraft {
+export function createAttempt(puzzle: PuzzleDefinition, position: number, startedAt: number, timeLimitMs: number | null, isPrimaryOutcome: boolean): AttemptDraft {
 	return {
 		client_attempt_id: crypto.randomUUID(),
 		puzzle_id: puzzle.id,
 		puzzle_version: puzzle.version,
 		position,
-		is_primary_outcome: position === 3,
+		is_primary_outcome: isPrimaryOutcome,
 		started_at_client: new Date().toISOString(),
 		time_limit_ms: timeLimitMs,
 		started_at_performance: startedAt,

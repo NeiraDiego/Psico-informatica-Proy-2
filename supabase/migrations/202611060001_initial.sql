@@ -10,6 +10,7 @@ create table participants (
 create table sessions (
   id uuid primary key default gen_random_uuid(),
   participant_id uuid not null references participants(id),
+	  participant_name text,
   "group" text not null check ("group" in ('A', 'B', 'C')),
   protocol_version text not null,
   app_version text not null,

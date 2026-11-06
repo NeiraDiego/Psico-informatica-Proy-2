@@ -70,10 +70,6 @@ export function validateUploadedBoard(payload: UploadPayload): { puzzle?: Puzzle
 	const regionIds = [...new Set(regions.flat())];
 	if (regionIds.length !== size) return { error: 'El tablero debe tener exactamente una región por cada fila y columna.' };
 	if (!hasConnectedRegions(regions, regionIds)) return { error: 'Cada región debe ser conexa por sus lados.' };
-	if (payload.availability !== 'free_play' && size !== 9) return { error: 'Los tableros experimentales deben ser de 9 por 9.' };
-	if (payload.availability !== 'free_play' && regionIds.sort().join('') !== 'ABCDEFGHI') {
-		return { error: 'Los tableros experimentales deben usar las regiones A a I.' };
-	}
 	if (!Array.isArray(payload.queenRowsByColumn)) return { error: `Debe indicar queenRowsByColumn con ${size} filas, una por columna.` };
 	const queenRowsByColumn = payload.queenRowsByColumn as number[];
 	if (!hasValidQueenPositions(regions, queenRowsByColumn)) {

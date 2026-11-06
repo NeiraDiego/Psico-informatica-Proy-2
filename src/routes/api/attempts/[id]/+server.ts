@@ -13,7 +13,7 @@ export async function PUT({ request, params, cookies }) {
 	if (attempt.client_attempt_id !== params.id || typeof attempt.puzzle_id !== 'string' || typeof attempt.puzzle_version !== 'string') {
 		return json({ error: 'Identificador de intento o puzle inválido.' }, { status: 400 });
 	}
-	if (!Number.isInteger(attempt.position) || (attempt.position as number) < 1 || (attempt.position as number) > 3) return json({ error: 'Posición inválida.' }, { status: 400 });
+	if (!Number.isInteger(attempt.position) || (attempt.position as number) < 1 || (attempt.position as number) > 5) return json({ error: 'Posición inválida.' }, { status: 400 });
 	if (!Number.isInteger(attempt.duration_ms) || (attempt.duration_ms as number) < 0 || (attempt.duration_ms as number) > 120500) return json({ error: 'Duración inválida.' }, { status: 400 });
 	if (!Array.isArray(attempt.movements) || !Array.isArray(attempt.final_board)) return json({ error: 'Movimientos o tablero final inválidos.' }, { status: 400 });
 	if (!supabaseConfig()) return json({ error: 'Persistencia no configurada.' }, { status: 503 });

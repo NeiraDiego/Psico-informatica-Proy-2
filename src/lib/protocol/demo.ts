@@ -1,4 +1,4 @@
-import type { BoardAvailability, Group, ProtocolSequence, PuzzleDefinition, PuzzleStatus } from '$lib/domain/types';
+import type { BoardAvailability, Group, PuzzleDefinition, PuzzleStatus } from '$lib/domain/types';
 import queensGameCatalog from '../../../data/queensgame-9x9.json';
 
 export const demoPuzzles: PuzzleDefinition[] = queensGameCatalog.boards.map((board) => ({
@@ -11,20 +11,13 @@ export const demoPuzzles: PuzzleDefinition[] = queensGameCatalog.boards.map((boa
 	queenRowsByColumn: board.queenRowsByColumn
 }));
 
-export const demoSequences: Record<Group, ProtocolSequence> = {
-	A: { group: 'A', puzzleIds: ['queensgame-16', 'queensgame-22', 'queensgame-47'] },
-	B: { group: 'B', puzzleIds: ['queensgame-58', 'queensgame-60', 'queensgame-47'] },
-	C: {
-		group: 'C',
-		puzzleIds: ['queensgame-58', 'queensgame-60', 'queensgame-47'],
-		warning: 'Debido a que este experimento busca medir el desempeño después de haber sido expuestos a tareas extremadamente difíciles, es posible que se te presenten desafíos muy difíciles o incluso imposibles de resolver en el tiempo previsto. Luego de eso pueden presentarse otros de dificultad moderada.'
-	}
-};
-
 export const DEMO_ADMIN_EMAIL = 'diegoneira@gmail.com';
 
-export function pickDemoGroup(): Group {
-	return (['A', 'B', 'C'] as const)[Math.floor(Math.random() * 3)];
+export const groupCWarning = 'Debido a que este experimento busca medir el desempeño después de haber sido expuestos a tareas extremadamente difíciles, es posible que se te presenten desafíos muy difíciles o incluso imposibles de resolver en el tiempo previsto. Luego de eso pueden presentarse otros de dificultad moderada.';
+
+export function pickDemoGroup(groupCount: number): Group {
+	const groups: Group[] = ['A', 'B', 'C', 'D'];
+	return groups[Math.floor(Math.random() * groupCount)];
 }
 
 export function getPuzzle(id: string): PuzzleDefinition {
