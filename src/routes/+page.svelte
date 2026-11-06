@@ -490,10 +490,13 @@
 	{:else if screen === 'complete'}
 		<section class="panel">
 			<h2>Experimento finalizado</h2>
-			<p>{deliveryStatus === 'sent' ? 'Resultados enviados.' : 'Resultados guardados localmente y pendientes de envío.'}</p>
-			<p>Se registraron {completedAttempts.length} intentos. El cierre, consentimiento y explicación final son borradores.</p>
-			<p>Perteneciste al grupo <strong>{group}</strong>.</p>
 			<p>A algunos participantes, elegidos al azar, se les presentaron tableros con dificultades artificialmente altas para ver cómo esto influía en tableros posteriores. Te invitamos a que juegues libremente tableros reales con dificultades reales cuando quieras, entrando con tu correo electrónico a esta misma página.</p>
+			<p>Perteneciste al grupo <strong>{group}</strong>.</p>
+			{#if group === 'A'}
+				<p>Las dificultades no fueron alteradas y se mantuvieron estables.</p>
+			{:else if group === 'B' || group === 'C'}
+				<p>Las dificultades fueron artificialmente altas excepto en el último tablero, que fue de dificultad intermedia e idéntico para todos los grupos.</p>
+			{/if}
 			<div class="actions"><button onclick={() => openFreePlay()}>Juego libre</button><button class="secondary" onclick={() => screen = 'hub'}>Opciones de regreso</button>{#if isDemoAdmin}<button class="secondary" onclick={() => screen = 'settings'}>Configuración</button>{/if}</div>
 		</section>
 	{:else if screen === 'free-play'}
