@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": {
-    "boards:convert": "node scripts/convert-queens-maps.mjs ../diez_mapas_9x9.json data/queensgame-9x9.json",
-    "dev": "vite dev",
+		"scripts": {
+		"boards:convert": "node scripts/convert-queens-maps.mjs ../diez_mapas_9x9.json data/queensgame-9x9.json",
+		"boards:catalog": "node scripts/convert-queens-maps.mjs tableros/catalogo_queens.json data/queensgame-catalog.json",
+			"results:synthetic": "node scripts/generate-synthetic-results.mjs",
+			"dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync",

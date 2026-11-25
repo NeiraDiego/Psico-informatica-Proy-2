@@ -5,7 +5,7 @@
 	import { validateUploadedBoard } from '$lib/domain/board-validation';
 	import { isSolved } from '$lib/domain/queens-rules';
 	import { addMovement, completeAttempt, createAttempt, type AttemptDraft, type CompletedAttempt } from '$lib/experiment/measurement';
-	import { AUTHORIZED_EMAILS, demoPuzzles, getPuzzle, groupCWarning, pickDemoGroup } from '$lib/protocol/demo';
+	import { AUTHORIZED_EMAILS, catalogPuzzles, demoPuzzles, groupCWarning, pickDemoGroup } from '$lib/protocol/demo';
 	import type { BoardDefinition, BoardMovement, CellState, Group, PuzzleDefinition, PuzzleDifficulty } from '$lib/domain/types';
 
 	type Screen = 'register' | 'hub' | 'overview' | 'tutorial' | 'prepare' | 'puzzle' | 'transition' | 'complete' | 'free-play' | 'settings';
@@ -39,21 +39,23 @@
 	let participantName = $state('');
 	let additionalInfoGroups = $state<Record<Group, boolean>>({ A: false, B: false, C: true, D: false, E: false });
 	let freePlayDifficulty = $state<PuzzleDifficulty | null>(null);
+	const sharedDifficultPuzzles = ['queensgame-58', 'queensgame-60'];
+	const sharedFinalPuzzle = 'queensgame-47';
 	let experimentConfig = $state({
 		puzzleCount: 3,
 		assignments: {
-			A: ['queensgame-16', 'queensgame-22', 'queensgame-47'],
-			B: ['queensgame-58', 'queensgame-60', 'queensgame-47'],
-			C: ['queensgame-58', 'queensgame-60', 'queensgame-47'],
-			D: ['queensgame-16', 'queensgame-22', 'queensgame-47'],
-			E: ['queensgame-16', 'queensgame-22', 'queensgame-47']
+			A: ['queensgame-16', 'queensgame-22', sharedFinalPuzzle],
+			B: [...sharedDifficultPuzzles, sharedFinalPuzzle],
+			C: [...sharedDifficultPuzzles, sharedFinalPuzzle],
+			D: ['queensgame-16', 'queensgame-22', sharedFinalPuzzle],
+			E: ['queensgame-16', 'queensgame-22', sharedFinalPuzzle]
 		} as Record<Group, string[]>
 	});
 
 	const isDemoAdmin = $derived(AUTHORIZED_EMAILS.includes(email.trim().toLowerCase()));
-	const allPuzzles = $derived([...demoPuzzles, ...uploadedPuzzles]);
+	const allPuzzles = $derived([...demoPuzzles, ...catalogPuzzles, ...uploadedPuzzles]);
 	const activeGroups: Group[] = ['A', 'B', 'C'];
-	const activePuzzle = $derived(getPuzzle(experimentConfig.assignments[group][puzzlePosition]));
+	const activePuzzle = $derived(allPuzzles.find((puzzle) => puzzle.id === experimentConfig.assignments[group][puzzlePosition]) ?? demoPuzzles[0]);
 	const difficultyOptions: Array<{ value: PuzzleDifficulty; label: string }> = [{ value: 'easy', label: 'Fácil' }, { value: 'medium', label: 'Medio' }, { value: 'hard', label: 'Difícil' }, { value: 'expert', label: 'Experto' }];
 	const tutorialFirstComplete = $derived(tutorialMarkedNeighbors.length === 8 && tutorialDragComplete);
 	const tutorialBoards: Array<{ board: BoardDefinition; queenRowsByColumn: Array<number | undefined> }> = [
@@ -66,7 +68,7 @@
 			queenRowsByColumn: [0, 3, 1, 4, 2]
 		},
 		{
-			board: { id: 'tutorial-filas-columnas', label: 'Tutorial: filas y columnas', regions: [['A', 'A', 'A', 'A', 'A'], ['A', 'A', 'C', 'A', 'A'], ['B', 'B', 'B', 'B', 'B'], ['B', 'D', 'D', 'D', 'E'], ['E', 'E', 'E', 'E', 'E']] },
+			board: { id: 'tutorial-filas-columnas', label: 'Tutorial: filas y columnas', regions: [['A', 'A', 'A', 'A', 'A'], ['A', 'A', 'C', 'A', 'A'], ['B', 'B', 'C', 'B', 'B'], ['B', 'D', 'D', 'E', 'E'], ['E', 'E', 'E', 'E', 'E']] },
 			queenRowsByColumn: [0, 3, 1, 4, 2]
 		}
 	];
@@ -92,7 +94,7 @@
 	const tutorialThreeOrangeCells = [5, 6, 8, 9];
 	const tutorialThreeOrangeMarked = $derived(tutorialThreeOrangeCells.every((index) => tutorialThreeCells[index] === 'mark'));
 	const tutorialThreeGreenQueen = $derived(tutorialThreeCells[7] === 'queen');
-	const tutorialThreeEdgeCells = [15, 19];
+	const tutorialThreeEdgeCells = [15, 18, 19];
 	const tutorialThreeComplete = $derived(tutorialThreeOrangeMarked && tutorialThreeGreenQueen && tutorialThreeEdgeCells.every((index) => tutorialThreeCells[index] === 'mark'));
 
 	onMount(() => {
@@ -449,6 +451,10 @@
 				<h2>Una reina bloquea sus celdas contiguas</h2>
 				<p>Debe haber una, y solo una, reina por fila y por columna. Las reinas no pueden estar en celdas contiguas, ni siquiera en diagonal.</p>
 				<p>Marca con X, haciendo un solo clic, en las cuatro celdas verde oscuro de los bordes. Luego haz clic en cualquiera de las ocho celdas verde claro alrededor de la reina y arrastra por las demás para marcarlas en un solo movimiento.</p>
+				<video class="tutorial-video" controls preload="metadata">
+					<source src="/queens-tutorial.mp4" type="video/mp4" />
+					Tu navegador no puede reproducir este video.
+				</video>
 				<QueensBoard board={tutorialBoards[0].board} initialCells={tutorialInitialStates[0]} cellClass={tutorialCellClass} onmove={trackTutorialFirstMovement} />
 				{#if tutorialMarkedNeighbors.length === 8 && !tutorialDragComplete}<p>Ahora arrastra con el dedo o mouse sobre celdas vacías para practicar el gesto de marcado.</p>{/if}
 				<div class="actions"><button disabled={!tutorialFirstComplete} onclick={() => tutorialStep = 2}>Siguiente</button><button class="secondary" onclick={() => screen = 'hub'}>Volver al menú inicial</button></div>
@@ -457,21 +463,21 @@
 				<p>Los colores representan regiones. Debe haber una, y solo una, reina por región. Solo en este tablero trabajaremos solo con filas para simplificar la explicación.</p>
 				<p>NO debes marcar adivinando, solo usando razonamiento lógico y conclusiones de la información que ya tienes.</p>
 				<ol class="tutorial-steps">
-					<li class:completed={tutorialTwoCells[0] === 'queen'}>Marca la casilla naranja como una reina haciendo dos clics.</li>
-					{#if tutorialTwoCells[0] === 'queen'}<li class:completed={tutorialTwoProgress >= 1}>Marca la fila completa con X, ya que ya encontramos la reina de esa fila. Recuerda que puedes arrastrar para marcar en un movimiento.</li>{/if}
-					{#if tutorialTwoProgress >= 1}<li class:completed={tutorialTwoCells[7] === 'queen'}>Ahora solo queda una celda amarilla. Nuestra reina amarilla debe estar ahí: márcala con dos clics y marca el resto de la fila con X.</li>{/if}
-					{#if tutorialTwoProgress >= 2}<li class:completed={tutorialTwoComplete}>Repite hasta encontrar todas las reinas.</li>{/if}
+					<li class:completed={tutorialTwoCells[0] === 'queen'}>Marca la casilla 1A (naranja) como una reina haciendo dos clics.</li>
+					{#if tutorialTwoCells[0] === 'queen'}<li class:completed={tutorialTwoProgress >= 1}>Marca el resto de la fila 1 con X, ya que ya encontramos la reina de esa fila. Recuerda que puedes arrastrar para marcar en un movimiento.</li>{/if}
+					{#if tutorialTwoProgress >= 1}<li class:completed={tutorialTwoCells[7] === 'queen'}>Ahora solo queda una celda amarilla disponible, que está en 2C. Nuestra reina amarilla debe estar ahí: márcala con dos clics y marca el resto de la fila 2 con X.</li>{/if}
+					{#if tutorialTwoProgress >= 2}<li class:completed={tutorialTwoComplete}>Repite hasta encontrar todas las reinas y todas las demás celdas con X.</li>{/if}
 				</ol>
-				<QueensBoard board={tutorialBoards[1].board} initialCells={tutorialTwoInitialCells} onmove={trackTutorialTwoMovement} />
+				<QueensBoard board={tutorialBoards[1].board} initialCells={tutorialTwoInitialCells} showRowNumbers showColumnLetters onmove={trackTutorialTwoMovement} />
 				<div class="actions"><button disabled={!tutorialTwoComplete} onclick={() => tutorialStep = 3}>Siguiente</button><button class="secondary" onclick={() => screen = 'hub'}>Volver al menú inicial</button></div>
 			{:else}
 				<h2>Una reina por fila y columna</h2>
 				<ol class="tutorial-steps">
-					<li class:completed={tutorialThreeOrangeMarked}>Si una fila completa es de un solo color, sabemos que la reina de ese color está en esa fila. Por lo tanto, en la primera fila sabemos que está la reina naranja y podemos descartar las celdas de ese color en la segunda fila: márcalas con X.</li>
+					<li class:completed={tutorialThreeOrangeMarked}>Si una fila completa es de un solo color, sabemos que la reina de ese color está en esa fila. En este ejemplo, en la fila 1 es completamente naranja, por lo que sabemos que la reina naranja está ahí y podemos descartar las celdas de ese color en la segunda y en el resto del tablero: marca las celdas naranjas de la fila 2 con X.</li>
 					{#if tutorialThreeOrangeMarked}<li class:completed={tutorialThreeGreenQueen}>Si en una fila solo queda una casilla, esta debe ser una reina. Marca la reina verde en la segunda fila.</li>{/if}
-					{#if tutorialThreeGreenQueen}<li class:completed={tutorialThreeComplete}>Si todas las celdas de un color están en una sola fila o columna, la reina de esa fila o columna debe ser de ese color. Por lo tanto, en la fila 4 puedes marcar con X las celdas de los extremos.</li>{/if}
+					{#if tutorialThreeGreenQueen}<li class:completed={tutorialThreeComplete}>Si todas las celdas de un color están en una sola fila o columna, la reina de esa fila o columna debe ser de ese color. Miremos la fila 4: como todas las celdas de color verde oscuro están en esa única fila, sabemos que A4 no puede ser la reina amarilla ni D4 o E4 la reina celeste; márcalas con X y con esto ya podríamos encontrar a nuestra reina de B4.</li>{/if}
 				</ol>
-				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialThreeInitialCells} showRowNumbers onmove={trackTutorialThreeMovement} />
+				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialThreeInitialCells} showRowNumbers showColumnLetters onmove={trackTutorialThreeMovement} />
 				<div class="actions"><button disabled={!tutorialThreeComplete} onclick={() => screen = 'prepare'}>Comenzar experimento</button><button class="secondary" onclick={() => screen = 'hub'}>Volver al menú inicial</button></div>
 			{/if}
 		</section>
@@ -501,8 +507,10 @@
 		</section>
 	{:else if screen === 'free-play'}
 		<section class="game-layout">
-			<div class="game-meta"><span>Juego libre{freePlayDifficulty ? `: ${difficultyOptions.find((option) => option.value === freePlayDifficulty)?.label}` : ''}</span><span>Movimientos: {freeMoves}</span><span>Sin límite temporal</span></div>
-			<QueensBoard board={freePuzzle} onmove={() => freeMoves += 1} />
+			<div class="game-meta"><span>Juego libre: {freePuzzle.regions.length}×{freePuzzle.regions.length}{freePlayDifficulty ? ` · ${difficultyOptions.find((option) => option.value === freePlayDifficulty)?.label}` : ''}</span><span>Movimientos: {freeMoves}</span><span>Sin límite temporal</span></div>
+			{#key `${freePuzzle.id}-${freePuzzle.regions.length}`}
+				<QueensBoard board={freePuzzle} onmove={() => freeMoves += 1} />
+			{/key}
 			<div class="actions"><button onclick={stopFreePlay}>Terminar juego libre</button>{#each difficultyOptions as option}<button class="secondary" disabled={!hasFreePlayPuzzle(option.value)} onclick={() => openFreePlay(option.value)}>Nuevo tablero: {option.label}</button>{/each}</div>
 		</section>
 	{:else if screen === 'settings'}

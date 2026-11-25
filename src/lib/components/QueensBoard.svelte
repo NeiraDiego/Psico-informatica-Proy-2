@@ -5,6 +5,7 @@
 		board,
 		disabled = false,
 		showRowNumbers = false,
+		showColumnLetters = false,
 		onmove,
 		cellClass,
 		initialCells
@@ -12,6 +13,7 @@
 		board: BoardDefinition;
 		disabled?: boolean;
 		showRowNumbers?: boolean;
+		showColumnLetters?: boolean;
 		onmove?: (movement: BoardMovement) => void;
 		cellClass?: (index: number, state: CellState) => string;
 		initialCells?: CellState[];
@@ -96,7 +98,10 @@
 	}
 </script>
 
-<div class:board-with-row-numbers={showRowNumbers} class="board-container" style={`--board-size: ${size}`}>
+<div class:board-with-row-numbers={showRowNumbers} class:board-with-column-letters={showColumnLetters} class="board-container" style={`--board-size: ${size}; --board-width: ${size < 9 ? 'min(80vw, 20rem)' : 'min(90vw, 34rem)'}`}>
+	{#if showColumnLetters}
+		<div class="column-letters" aria-hidden="true">{#each Array(size) as _, column}<span>{String.fromCharCode(65 + column)}</span>{/each}</div>
+	{/if}
 	{#if showRowNumbers}
 		<div class="row-numbers" aria-hidden="true">{#each Array(size) as _, row}<span>{row + 1}</span>{/each}</div>
 	{/if}
@@ -120,7 +125,17 @@
 				onpointercancel={() => finishPointer(true)}
 				onclick={() => handleClick(index)}
 			>
-				{cell === 'mark' ? 'X' : cell === 'queen' ? 'Q' : ''}
+				{#if cell === 'mark'}
+					X
+				{:else if cell === 'queen'}
+					<svg class="crown" viewBox="0 0 64 64" aria-hidden="true">
+						<path d="M9 19 22 30 32 11l10 19 13-11-5 29H14z" fill="#fbbf24" stroke="#78350f" stroke-linejoin="round" stroke-width="4" />
+						<path d="M14 48h36v8H14z" fill="#f59e0b" stroke="#78350f" stroke-linejoin="round" stroke-width="4" />
+						<circle cx="22" cy="38" r="3" fill="#ef4444" />
+						<circle cx="32" cy="38" r="3" fill="#2563eb" />
+						<circle cx="42" cy="38" r="3" fill="#ef4444" />
+					</svg>
+				{/if}
 			</button>
 		{/each}
 	</div>

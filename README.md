@@ -43,7 +43,8 @@ El reconocimiento de regreso se guarda solo en `localStorage` y contiene únicam
 
 ## Modo libre y configuración
 
-- Una persona que vuelve con el mismo correo puede abrir **Juego libre**, que escoge aleatoriamente uno de los diez tableros del catálogo y no limita el tiempo. Sus movimientos no se guardan todavía.
+- Una persona que vuelve con el mismo correo puede abrir **Juego libre**, que escoge aleatoriamente un tablero del catálogo y no limita el tiempo. Sus movimientos no se guardan todavía.
+- El catálogo generado en `data/queensgame-catalog.json` añade 1.402 tableros de 6×6, 7×7, 8×8 y 9×9 para Juego libre. Proviene de los archivos en `tableros/`; se puede regenerar con `npm run boards:catalog`.
 - Tras completar el experimento aparecen las mismas opciones de regreso.
 - **Configuración** se muestra solo para el correo autorizado indicado arriba. La versión definitiva consultará `ADMIN_EMAILS` exclusivamente en el servidor. La coincidencia de correo sin verificación no es autenticación robusta y no debe dar acceso a historiales ni datos de participantes.
 - Configuración permite registrar un nombre de participante separado del nombre y correo del experimentador que abre la sesión. El valor se guarda en `sessions.participant_name`.
