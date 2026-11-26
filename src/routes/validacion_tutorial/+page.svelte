@@ -35,6 +35,7 @@
 
 	const tutorialTwoQueenCells = [0, 7, 14, 16, 23];
 	const tutorialTwoProgress = $derived(tutorialTwoQueenCells.filter((queenIndex) => {
+		if (queenIndex === 23) return tutorialTwoCells[queenIndex] === 'queen';
 		const row = Math.floor(queenIndex / 5);
 		return tutorialTwoCells[queenIndex] === 'queen' && Array.from({ length: 5 }, (_, column) => row * 5 + column).every((index) => index === queenIndex || tutorialTwoCells[index] === 'mark');
 	}).length);

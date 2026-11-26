@@ -93,6 +93,7 @@
 	const tutorialThreeInitialCells: CellState[] = Array.from({ length: 25 }, () => 'empty');
 	const tutorialTwoQueenCells = [0, 7, 14, 16, 23];
 	const tutorialTwoProgress = $derived(tutorialTwoQueenCells.filter((queenIndex) => {
+		if (queenIndex === 23) return tutorialTwoCells[queenIndex] === 'queen';
 		const row = Math.floor(queenIndex / 5);
 		return tutorialTwoCells[queenIndex] === 'queen' && Array.from({ length: 5 }, (_, column) => row * 5 + column).every((index) => index === queenIndex || tutorialTwoCells[index] === 'mark');
 	}).length);
@@ -112,7 +113,9 @@
 				localStorage.removeItem('queens-demo-emails');
 			}
 		}
-		if (entry !== 'consent') {
+		if (entry === 'free-play') {
+			openFreePlay();
+		} else if (entry !== 'consent') {
 			const storedUser = localStorage.getItem('queens-current-user');
 			if (!storedUser) {
 				void goto('/');
@@ -146,7 +149,6 @@
 				moveCount = 0;
 				screen = 'prepare';
 			}
-			if (entry === 'free-play') openFreePlay();
 			if (entry === 'settings') {
 				if (!AUTHORIZED_EMAILS.includes(email.trim().toLowerCase())) {
 					void goto('/menu');
@@ -600,7 +602,7 @@
 	{:else if screen === 'complete'}
 		<section class="panel">
 			<h2>Experimento finalizado</h2>
-			<p>A algunos participantes, elegidos al azar, se les presentaron tableros con dificultades artificialmente altas para ver cómo esto influía en tableros posteriores. Te invitamos a que juegues libremente tableros reales con dificultades reales cuando quieras, entrando con tu correo electrónico a esta misma página.</p>
+			<p>A algunos participantes, elegidos al azar, se les presentaron tableros con dificultades artificialmente altas para ver cómo esto influía en tableros posteriores. Te invitamos a jugar libremente tableros reales con dificultades reales en <a href="https://queens-hazel.vercel.app/free_play">https://queens-hazel.vercel.app/free_play</a>.</p>
 			<p>Perteneciste al grupo <strong>{group}</strong>.</p>
 			{#if group === 'A'}
 				<p>Las dificultades no fueron alteradas y se mantuvieron estables.</p>
