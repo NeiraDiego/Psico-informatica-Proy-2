@@ -34,21 +34,40 @@ function catalogPuzzle(id: string) {
 	return puzzle;
 }
 
-const modified468 = catalogPuzzle('queensgame-6x6-standard-468');
+const base468 = catalogPuzzle('queensgame-6x6-standard-468');
+
+export const modified468Puzzle: PuzzleDefinition = {
+	...base468,
+	id: 'queensgame-6x6-standard-468-modified',
+	version: 'difficulty-validation-1',
+	label: 'QueensGame 6x6 · standard 468 modificado',
+	availability: 'experimental',
+	regions: base468.regions.map((row, rowIndex) => row.map((region, columnIndex) => (
+		(rowIndex === 2 || rowIndex === 3) && columnIndex === 5 ? base468.regions[2][4] : region
+	)))
+};
+
+const base178 = catalogPuzzle('queensgame-8x8-standard-178');
+
+export const modified178Puzzle: PuzzleDefinition = {
+	...base178,
+	id: 'queensgame-8x8-standard-178-modified',
+	version: 'difficulty-validation-1',
+	label: 'QueensGame 8x8 · standard 178 modificado',
+	availability: 'experimental',
+	regions: base178.regions.map((row, rowIndex) => row.map((region, columnIndex) => {
+		if (rowIndex === 0 && columnIndex === 2) return base178.regions[0][3]; // C1 → D1
+		if (rowIndex === 4 && columnIndex === 2) return base178.regions[4][3]; // C5 → D5
+		if (rowIndex === 1 && columnIndex === 6) return base178.regions[2][6]; // G2 → G3
+		return region;
+	}))
+};
 
 export const difficultyValidationPuzzles: PuzzleDefinition[] = [
 	catalogPuzzle('queensgame-7x7-standard-310'),
 	catalogPuzzle('queensgame-7x7-standard-137'),
-	{
-		...modified468,
-		id: 'queensgame-6x6-standard-468-modified',
-		version: 'difficulty-validation-1',
-		label: 'QueensGame 6x6 · standard 468 modificado',
-		availability: 'experimental',
-		regions: modified468.regions.map((row, rowIndex) => row.map((region, columnIndex) => (
-			(rowIndex === 2 || rowIndex === 3) && columnIndex === 5 ? modified468.regions[2][4] : region
-		)))
-	},
+	modified468Puzzle,
+	modified178Puzzle,
 	catalogPuzzle('queensgame-7x7-standard-158'),
 	catalogPuzzle('queensgame-7x7-standard-130'),
 	catalogPuzzle('queensgame-7x7-standard-103')
