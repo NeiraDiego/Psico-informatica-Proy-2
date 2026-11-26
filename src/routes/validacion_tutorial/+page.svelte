@@ -16,7 +16,7 @@
 			queenRowsByColumn: [0, 3, 1, 4, 2]
 		},
 		{
-			board: { id: 'validation-tutorial-filas-columnas', label: 'Tutorial: filas y columnas', regions: [['A', 'A', 'A', 'A', 'A'], ['A', 'A', 'C', 'A', 'A'], ['B', 'B', 'C', 'B', 'B'], ['B', 'D', 'D', 'E', 'E'], ['E', 'E', 'E', 'E', 'E']] },
+			board: { id: 'validation-tutorial-filas-columnas', label: 'Tutorial: filas y columnas', regions: [['A', 'A', 'A', 'A', 'A'], ['A', 'A', 'C', 'A', 'A'], ['B', 'B', 'C', 'B', 'B'], ['D', 'D', 'D', 'E', 'E'], ['E', 'E', 'E', 'E', 'E']] },
 			queenRowsByColumn: [0, 3, 1, 4, 2]
 		}
 	];
@@ -42,7 +42,7 @@
 	const tutorialThreeOrangeCells = [5, 6, 8, 9];
 	const tutorialThreeOrangeMarked = $derived(tutorialThreeOrangeCells.every((index) => tutorialThreeCells[index] === 'mark'));
 	const tutorialThreeGreenQueen = $derived(tutorialThreeCells[7] === 'queen');
-	const tutorialThreeEdgeCells = [15, 18, 19];
+	const tutorialThreeEdgeCells = [15, 17];
 	const tutorialThreeComplete = $derived(tutorialThreeOrangeMarked && tutorialThreeGreenQueen && tutorialThreeEdgeCells.every((index) => tutorialThreeCells[index] === 'mark'));
 
 	function initialCells(queenRowsByColumn: Array<number | undefined>) {
@@ -101,6 +101,10 @@
 		return '';
 	}
 
+	function tutorialThreeCellClass(index: number) {
+		return [15, 16, 17].includes(index) ? 'tutorial-red-region' : '';
+	}
+
 </script>
 
 <main>
@@ -115,19 +119,24 @@
 			{#if tutorialStep === 1}
 				<h2>Una reina bloquea sus celdas contiguas</h2>
 				<p>Debe haber una, y solo una, reina por fila y por columna. Las reinas no pueden estar en celdas contiguas, ni siquiera en diagonal.</p>
-				<p>Marca con X, haciendo un solo clic, en las cuatro celdas verde oscuro de los bordes. Luego haz clic en cualquiera de las ocho celdas verde claro alrededor de la reina y arrastra por las demás para marcarlas en un solo movimiento.</p>
+				<p>Haz clic, dejando presionado, en cualquiera de las ocho celdas verde claro alrededor de la reina y arrastra por las demás para marcarlas con X en un solo movimiento.</p>
+				<p>A continuación marca con X las celdas verde oscuro, haciendo un solo clic en cada una de ellas, ya que esa columna y esa fila ya tienen su reina.</p>
 				<video class="tutorial-video" controls preload="metadata"><source src="/queens-tutorial.mp4" type="video/mp4" />Tu navegador no puede reproducir este video.</video>
 				<QueensBoard board={tutorialBoards[0].board} initialCells={tutorialInitialStates[0]} cellClass={tutorialCellClass} onmove={trackTutorialFirstMovement} />
 				{#if tutorialMarkedNeighbors.length === 8 && !tutorialDragComplete}<p>Ahora arrastra con el dedo o mouse sobre celdas vacías para practicar el gesto de marcado.</p>{/if}
+				{#if tutorialMarkedNeighbors.length === 8 && tutorialDragComplete}
+					<p>Siempre recuerda: apenas encuentres una reina, puedes bloquear las celdas de alrededor y la fila y la columna completa.</p>
+					<video class="tutorial-video" controls preload="metadata"><source src="/queens-found-queen.mp4" type="video/mp4" />Tu navegador no puede reproducir este video.</video>
+				{/if}
 				<div class="actions"><button disabled={!(tutorialMarkedNeighbors.length === 8 && tutorialDragComplete)} onclick={() => tutorialStep = 2}>Siguiente</button></div>
 			{:else if tutorialStep === 2}
 				<h2>Descartar para encontrar una reina</h2>
-				<p>Los colores representan regiones. Debe haber una, y solo una, reina por región. Solo en este tablero trabajaremos solo con filas para simplificar la explicación.</p>
+				<p>Los colores representan regiones. Debe haber una, y solo una, reina por región. En este tablero.</p>
 				<ol class="tutorial-steps">
 					<li class:completed={tutorialTwoCells[0] === 'queen'}>Marca la casilla 1A (naranja) como una reina haciendo dos clics.</li>
-					{#if tutorialTwoCells[0] === 'queen'}<li class:completed={tutorialTwoProgress >= 1}>Marca el resto de la fila 1 con X, ya que ya encontramos la reina de esa fila. Recuerda que puedes arrastrar para marcar en un movimiento.</li>{/if}
+					{#if tutorialTwoCells[0] === 'queen'}<li class:completed={tutorialTwoProgress >= 1}>Marca el resto de la fila 1 con X, porque ya encontramos la reina de esa fila. Recuerda que puedes arrastrar para marcar en un movimiento.</li>{/if}
 					{#if tutorialTwoProgress >= 1}<li class:completed={tutorialTwoCells[7] === 'queen'}>Ahora solo queda una celda amarilla disponible, que está en 2C. Nuestra reina amarilla debe estar ahí: márcala con dos clics y marca el resto de la fila 2 con X.</li>{/if}
-					{#if tutorialTwoProgress >= 2}<li class:completed={tutorialTwoComplete}>Repite hasta encontrar todas las reinas y todas las demás celdas con X.</li>{/if}
+					{#if tutorialTwoProgress >= 2}<li class:completed={tutorialTwoComplete}>Repite hasta encontrar todas las reinas y todas las demás celdas con X. El color azul oscuro no tiene reina.</li>{/if}
 				</ol>
 				<QueensBoard board={tutorialBoards[1].board} initialCells={tutorialTwoInitialCells} showRowNumbers showColumnLetters onmove={trackTutorialTwoMovement} />
 				<div class="actions"><button disabled={!tutorialTwoComplete} onclick={() => tutorialStep = 3}>Siguiente</button></div>
@@ -136,9 +145,9 @@
 				<ol class="tutorial-steps">
 					<li class:completed={tutorialThreeOrangeMarked}>Si una fila completa es de un solo color, sabemos que la reina de ese color está en esa fila. En este ejemplo, en la fila 1 es completamente naranja, por lo que sabemos que la reina naranja está ahí y podemos descartar las celdas de ese color en la segunda y en el resto del tablero: marca las celdas naranjas de la fila 2 con X.</li>
 					{#if tutorialThreeOrangeMarked}<li class:completed={tutorialThreeGreenQueen}>Si en una fila solo queda una casilla, esta debe ser una reina. Marca la reina verde en la segunda fila.</li>{/if}
-					{#if tutorialThreeGreenQueen}<li class:completed={tutorialThreeComplete}>Si todas las celdas de un color están en una sola fila o columna, la reina de esa fila o columna debe ser de ese color. Miremos la fila 4: como todas las celdas de color verde oscuro están en esa única fila, sabemos que A4 no puede ser la reina amarilla ni D4 o E4 la reina celeste; márcalas con X y con esto ya podríamos encontrar a nuestra reina de B4.</li>{/if}
+					{#if tutorialThreeGreenQueen}<li class:completed={tutorialThreeComplete}>Si todas las celdas de un color están en una sola fila o columna, la reina de esa fila o columna debe ser de ese color. Miremos la fila 4: como todas las celdas rojas están en esa única fila, sabemos que A4 y C4 no pueden ser la reina roja porque sus columnas ya tienen una reina; márcalas con X y con esto ya podríamos encontrar a nuestra reina de B4.</li>{/if}
 				</ol>
-				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialThreeInitialCells} showRowNumbers showColumnLetters onmove={trackTutorialThreeMovement} />
+				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialThreeInitialCells} showRowNumbers showColumnLetters cellClass={tutorialThreeCellClass} onmove={trackTutorialThreeMovement} />
 				<div class="actions"><button disabled={!tutorialThreeComplete} onclick={() => screen = 'validation'}>Comenzar validación</button></div>
 			{/if}
 		</section>
