@@ -110,6 +110,7 @@
 			{@const row = Math.floor(index / size)}
 			{@const column = index % size}
 			{@const regionIndex = board.regions[row][column].charCodeAt(0) - 64}
+			{@const regionHue = regionIndex === 4 ? 0 : regionIndex * 37}
 			<button
 				type="button"
 				data-cell-index={index}
@@ -117,7 +118,7 @@
 				class:marked={cell === 'mark'}
 				class:queen={cell === 'queen'}
 				disabled={disabled}
-				style={`--region: ${regionIndex}`}
+				style={`--region: ${regionHue}`}
 				aria-label={`Fila ${row + 1}, columna ${column + 1}: ${cell === 'empty' ? 'vacía' : cell === 'mark' ? 'marca X' : 'reina'}`}
 				onpointerdown={(event) => startPointer(event, index)}
 				onpointermove={movePointer}

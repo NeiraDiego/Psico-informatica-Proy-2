@@ -11,7 +11,6 @@
 
 	let screen = $state<Screen>('identify');
 	let name = $state('');
-	let email = $state('');
 	let registered = $state(false);
 	let registrationMessage = $state('');
 	let boardIndex = $state(0);
@@ -31,22 +30,23 @@
 	});
 
 	async function registerIdentity() {
-		const normalizedEmail = email.trim().toLowerCase();
-		if (!name.trim() || !/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
-			registrationMessage = 'Ingresa un nombre y un correo electrónico válidos.';
+		const normalizedName = name.trim();
+		if (!normalizedName) {
+			registrationMessage = 'Ingresa un nombre para continuar.';
 			return;
 		}
-		const keyName = `queens-difficulty-validation-session:${normalizedEmail}`;
+		const keyName = `queens-difficulty-validation-session:${normalizedName.toLowerCase()}`;
 		let idempotencyKey = localStorage.getItem(keyName);
 		if (!idempotencyKey) {
 			idempotencyKey = crypto.randomUUID();
 			localStorage.setItem(keyName, idempotencyKey);
 		}
+		const technicalEmail = `difficulty-${idempotencyKey}@example.invalid`;
 		try {
 			const response = await fetch('/api/sessions', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ name: name.trim(), email: normalizedEmail, participant_name: name.trim(), idempotency_key: idempotencyKey }),
+				body: JSON.stringify({ name: normalizedName, email: technicalEmail, participant_name: normalizedName, idempotency_key: idempotencyKey }),
 				credentials: 'same-origin'
 			});
 			registrationMessage = response.ok
@@ -120,10 +120,9 @@
 	{#if screen === 'identify'}
 		<section class="panel">
 			<h2>Identificación</h2>
-			<p>Ingresa tus datos para respaldar tus intentos de evaluación. Los tableros no tienen límite de tiempo.</p>
+			<p>Ingresa tu nombre para respaldar tus intentos de evaluación. Los tableros no tienen límite de tiempo.</p>
 			<form onsubmit={(event) => { event.preventDefault(); registerIdentity(); }}>
 				<label>Nombre <input bind:value={name} autocomplete="name" required /></label>
-				<label>Correo electrónico <input bind:value={email} type="email" autocomplete="email" required /></label>
 				<button>Continuar</button>
 			</form>
 			{#if registrationMessage}<p class="upload-message">{registrationMessage}</p>{/if}
