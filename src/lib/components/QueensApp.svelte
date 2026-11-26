@@ -205,16 +205,18 @@
 			localStorage.setItem('queens-demo-emails', JSON.stringify([...new Set([...emails, normalized])]));
 		}
 		email = normalized;
-		if (!returning) {
-			sessionRegistrationStatus = 'pending';
-			const serverGroup = await registerServerSession(name.trim(), normalized, participantName.trim() || null);
-			group = serverGroup ?? pickDemoGroup();
-			localStorage.setItem(`queens-assigned-group:${normalized}`, group);
-			sessionRegistrationStatus = serverGroup ? 'ready' : 'idle';
+		sessionRegistrationStatus = 'pending';
+		const serverGroup = await registerServerSession(name.trim(), normalized, participantName.trim() || null);
+		const savedGroup = localStorage.getItem(`queens-assigned-group:${normalized}`);
+		if (serverGroup) {
+			group = serverGroup;
+		} else if (savedGroup === 'A' || savedGroup === 'B' || savedGroup === 'C' || savedGroup === 'D' || savedGroup === 'E') {
+			group = savedGroup;
 		} else {
-			const savedGroup = localStorage.getItem(`queens-assigned-group:${normalized}`);
-			if (savedGroup === 'A' || savedGroup === 'B' || savedGroup === 'C' || savedGroup === 'D' || savedGroup === 'E') group = savedGroup;
+			group = pickDemoGroup();
 		}
+		localStorage.setItem(`queens-assigned-group:${normalized}`, group);
+		sessionRegistrationStatus = serverGroup ? 'ready' : 'idle';
 		localStorage.setItem('queens-current-user', JSON.stringify({ name: name.trim(), email: normalized, group }));
 		void goto(returning ? '/menu' : '/tutorial');
 	}

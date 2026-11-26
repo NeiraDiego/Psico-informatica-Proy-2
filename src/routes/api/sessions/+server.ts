@@ -10,6 +10,10 @@ function chooseGroup() {
 	return ['A', 'B', 'C'][Math.floor(Math.random() * 3)];
 }
 
+function setSessionCookie(cookies: Parameters<typeof POST>[0]['cookies'], token: string) {
+	cookies.set('queens_session_token', token, { path: '/', httpOnly: true, sameSite: 'lax', secure: !import.meta.env.DEV, maxAge: 60 * 60 * 24 * 14 });
+}
+
 export async function POST({ request, cookies }) {
 	const body: unknown = await request.json().catch(() => null);
 	if (!body || typeof body !== 'object') return json({ error: 'Cuerpo JSON inválido.' }, { status: 400 });
@@ -23,7 +27,16 @@ export async function POST({ request, cookies }) {
 	const existing = await supabaseRequest(`sessions?select=id,group&idempotency_key=eq.${encodeURIComponent(idempotency_key)}`);
 	if (!existing.ok) return json({ error: 'No se pudo consultar la sesión.' }, { status: 502 });
 	const sessions = await existing.json() as Array<{ id: string; group: 'A' | 'B' | 'C' | 'D' | 'E' }>;
-	if (sessions[0]) return json({ group: sessions[0].group, reused: true });
+	if (sessions[0]) {
+		const token = randomUUID() + randomUUID();
+		const renewedSession = await supabaseRequest(`sessions?id=eq.${sessions[0].id}`, {
+			method: 'PATCH',
+			body: JSON.stringify({ access_token_hash: hashToken(token) })
+		});
+		if (!renewedSession.ok) return json({ error: 'No se pudo renovar la sesión.' }, { status: 502 });
+		setSessionCookie(cookies, token);
+		return json({ group: sessions[0].group, reused: true });
+	}
 
 	const participantResponse = await supabaseRequest('participants', {
 		method: 'POST',
@@ -49,6 +62,6 @@ export async function POST({ request, cookies }) {
 		})
 	});
 	if (!sessionResponse.ok) return json({ error: 'No se pudo crear la sesión.' }, { status: 502 });
-	cookies.set('queens_session_token', token, { path: '/', httpOnly: true, sameSite: 'lax', secure: !import.meta.env.DEV, maxAge: 60 * 60 * 24 * 14 });
+	setSessionCookie(cookies, token);
 	return json({ group, reused: false }, { status: 201 });
 }
