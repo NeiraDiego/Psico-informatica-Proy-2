@@ -22,7 +22,10 @@ async function transaction<T>(mode: IDBTransactionMode, action: (store: IDBObjec
 }
 
 export function queueAttempt(attempt: CompletedAttempt) {
-	return transaction('readwrite', (store) => store.put(attempt));
+	// Los objetos provenientes de estado reactivo de Svelte pueden ser Proxy,
+	// que IndexedDB no puede clonar. El registro solo contiene datos JSON.
+	const storedAttempt = JSON.parse(JSON.stringify(attempt)) as CompletedAttempt;
+	return transaction('readwrite', (store) => store.put(storedAttempt));
 }
 
 export function removeQueuedAttempt(clientAttemptId: string) {

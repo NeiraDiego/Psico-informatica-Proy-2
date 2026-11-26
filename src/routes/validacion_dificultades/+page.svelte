@@ -122,7 +122,7 @@
 			<h2>Identificación</h2>
 			<p>Ingresa tu nombre para respaldar tus intentos de evaluación. Los tableros no tienen límite de tiempo.</p>
 			<form onsubmit={(event) => { event.preventDefault(); registerIdentity(); }}>
-				<label>Nombre <input bind:value={name} autocomplete="name" required /></label>
+				<label>Nombre <input id="difficulty-validation-name" name="difficulty-validation-name" bind:value={name} autocomplete="name" required /></label>
 				<button>Continuar</button>
 			</form>
 			{#if registrationMessage}<p class="upload-message">{registrationMessage}</p>{/if}

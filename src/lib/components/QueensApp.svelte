@@ -513,8 +513,8 @@
 			<p>Autorizo al investigador responsable a utilizar los datos obtenidos para los propósitos del estudio y la publicación de sus resultados en los términos planteados anteriormente. Al aceptar este documento no renuncio a ningún derecho que me asista y recibiré una copia firmada de este, en el presente acto.</p>
 			<p>Declaro mi consentimiento para participar en este estudio bajo los términos anteriormente descritos.</p>
 			<form onsubmit={(event) => { event.preventDefault(); continueFromConsent(); }}>
-				<label>Nombre <input bind:value={name} autocomplete="name" required /></label>
-				<label class="checkbox"><input bind:checked={consentAccepted} type="checkbox" required /> Acepto lo antes expuesto.</label>
+				<label>Nombre <input id="participant-name" name="participant-name" bind:value={name} autocomplete="name" required /></label>
+				<label class="checkbox"><input id="consent-accepted" name="consent-accepted" bind:checked={consentAccepted} type="checkbox" required /> Acepto lo antes expuesto.</label>
 				<button>Aceptar y continuar</button>
 			</form>
 		</section>
@@ -536,8 +536,8 @@
 			<p>El objetivo es encontrar reinas ocultas en un tablero. Se medirá el tiempo que demoras, la cantidad de movimientos que realizas y, si no completas la tarea, cuántas reinas logras encontrar.</p>
 			<p>Primero verás un breve tutorial y luego resolverás {experimentConfig.puzzleCount} tableros. Cada tablero tiene un límite de 120 segundos. El puntaje refleja únicamente el desempeño puntual en esta tarea y no mide ningún tipo de inteligencia.</p>
 			<form onsubmit={(event) => { event.preventDefault(); register(); }}>
-				<label class="checkbox"><input bind:checked={wantsRelativeResults} type="checkbox" /> Quiero conocer mis resultados relativos a mi grupo.</label>
-				{#if wantsRelativeResults}<label>Correo electrónico <input bind:value={email} type="email" autocomplete="email" required /></label>{/if}
+				<label class="checkbox"><input id="relative-results" name="relative-results" bind:checked={wantsRelativeResults} type="checkbox" /> Quiero conocer mis resultados relativos a mi grupo.</label>
+				{#if wantsRelativeResults}<label>Correo electrónico <input id="participant-email" name="participant-email" bind:value={email} type="email" autocomplete="email" required /></label>{/if}
 				<button>Comenzar tutorial</button>
 			</form>
 		</section>
@@ -625,25 +625,25 @@
 			<p>Vista reservada al correo autorizado. La autorización real se resolverá en servidor mediante <code>ADMIN_EMAILS</code>. Los cambios de esta pantalla solo viven mientras esta página permanezca abierta.</p>
 			<h3>Estructura del experimento</h3>
 			<label>Participante (en caso de ser distinto al experimentador que ingresó con correo electrónico):
-				<input bind:value={participantName} autocomplete="name" />
+				<input id="registered-participant-name" name="registered-participant-name" bind:value={participantName} autocomplete="name" />
 			</label>
 			<div class="settings-grid">
 				<p>Grupos experimentales: A, B y C. La asignación se realiza aleatoriamente con probabilidad 1/3 para cada grupo.</p>
 				<label>Tableros por experimento
-					<select value={experimentConfig.puzzleCount} onchange={(event) => resizeExperiment(Number(event.currentTarget.value))}>
+					<select id="experiment-puzzle-count" name="experiment-puzzle-count" value={experimentConfig.puzzleCount} onchange={(event) => resizeExperiment(Number(event.currentTarget.value))}>
 						<option value="2">2 tableros</option><option value="3">3 tableros</option><option value="4">4 tableros</option><option value="5">5 tableros</option>
 					</select>
 				</label>
 			</div>
 			<h3>Información adicional</h3>
 			<p>Selecciona los grupos a los que se les mostrará la información adicional antes del tutorial.</p>
-			<div class="checkboxes">{#each activeGroups as groupCode}<label><input type="checkbox" bind:checked={additionalInfoGroups[groupCode]} /> Grupo {groupCode}</label>{/each}</div>
+			<div class="checkboxes">{#each activeGroups as groupCode}<label><input id={`additional-info-${groupCode}`} name={`additional-info-${groupCode}`} type="checkbox" bind:checked={additionalInfoGroups[groupCode]} /> Grupo {groupCode}</label>{/each}</div>
 			{#each activeGroups as groupCode}
 				<h3>Grupo {groupCode}</h3>
 				<div class="settings-grid">
 					{#each experimentConfig.assignments[groupCode] as puzzleId, position}
 						<label>Tablero {position + 1}
-							<select value={puzzleId} onchange={(event) => assignPuzzle(groupCode, position, event.currentTarget.value)}>
+							<select id={`assignment-${groupCode}-${position}`} name={`assignment-${groupCode}-${position}`} value={puzzleId} onchange={(event) => assignPuzzle(groupCode, position, event.currentTarget.value)}>
 								{#each allPuzzles as puzzle}<option value={puzzle.id}>{puzzle.label}</option>{/each}
 							</select>
 						</label>
@@ -652,7 +652,7 @@
 			{/each}
 			<h3>Subir tablero JSON</h3>
 			<p>Seleccione un archivo con <code>id</code>, <code>label</code>, <code>availability</code>, <code>regions</code> y <code>queenRowsByColumn</code>. Se admiten matrices cuadradas de cualquier tamaño.</p>
-			<div class="actions"><input type="file" accept="application/json,.json" onchange={uploadBoard} /><button class="secondary" onclick={() => showBoardCatalog = !showBoardCatalog}>{showBoardCatalog ? 'Ocultar tableros' : 'Ver tableros cargados'}</button></div>
+			<div class="actions"><input id="board-upload" name="board-upload" type="file" accept="application/json,.json" onchange={uploadBoard} /><button class="secondary" onclick={() => showBoardCatalog = !showBoardCatalog}>{showBoardCatalog ? 'Ocultar tableros' : 'Ver tableros cargados'}</button></div>
 			{#if showBoardCatalog}<ul>{#each allPuzzles as puzzle}<li>{puzzle.label}: {puzzle.regions.length}x{puzzle.regions.length}, {puzzle.availability}</li>{/each}</ul>{/if}
 			{#if uploadMessage}<p class="upload-message">{uploadMessage}</p>{/if}
 			<h3>Respaldo local</h3>
