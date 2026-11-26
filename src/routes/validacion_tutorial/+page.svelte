@@ -121,7 +121,7 @@
 				<h2>Una reina bloquea sus celdas contiguas</h2>
 				<p>Debe haber una, y solo una, reina por fila y por columna. Las reinas no pueden estar en celdas contiguas, ni siquiera en diagonal.</p>
 				<p>Haz clic, dejando presionado, en cualquiera de las ocho celdas verde claro alrededor de la reina y arrastra por las demás para marcarlas con X en un solo movimiento.</p>
-				<p>A continuación marca con X las celdas verde oscuro, haciendo un solo clic en cada una de ellas, ya que esa columna y esa fila ya tienen su reina.</p>
+				<p>A continuación marca con X las celdas rojas, haciendo un solo clic en cada una de ellas, ya que esa columna y esa fila ya tienen su reina.</p>
 				<video class="tutorial-video" controls preload="metadata"><source src="/queens-tutorial.mp4" type="video/mp4" />Tu navegador no puede reproducir este video.</video>
 				<QueensBoard board={tutorialBoards[0].board} initialCells={tutorialInitialStates[0]} cellClass={tutorialCellClass} onmove={trackTutorialFirstMovement} />
 				{#if tutorialMarkedNeighbors.length === 8 && !tutorialDragComplete}<p>Ahora arrastra con el dedo o mouse sobre celdas vacías para practicar el gesto de marcado.</p>{/if}
