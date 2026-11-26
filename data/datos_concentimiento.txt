@@ -1,0 +1,31 @@
+el consentimiento informado que debe tener la siguiente informacion (corrige puntuacion y ortografia):
+- Investigador principal: Diego Neira
+- Investigador asistente: Constanza Greig
+- Titulo de la investigacion: Videjuego Queens: Desempeño en tareas de resolucion de problemas en tiempo limitado
+- Objetivo de la investigacion: Recolectar informacion sobre el desempeño en determiadas tareas y en tiempo limitado y comparacion entre grupo con condiciones diferentes. Para esto se eligio el minijuego Queens (Que se describira mas adelante)
+- Descripcion de la participacion: se le invita a usted a participar, completando un pequeño tutorial y luego jugando 3 tableros con tiempo limitado.
+- Beneficios esperados: Su participacion nos ayudara a comprender como las condiciones en las que se ejecutan tareas de resolucion de problema afectan en el desempeño, lo que nos permite mejorar las condiciones de quienes dependen de dicho desempeño.
+Es importante 
+Los participantes no tendran beneficios directos mas alla de poder jugar todos los tableros que quieran de los que estan disponibles
+- Confidencialidad: Toda la información recopilada será dispuesta para los fines específicos del estudio y exclusivos de la investigación propuesta.
+Accederán a la información recopilada únicamente los miembros del equipo investigador compuesto por Diego Neira y Constanza Greig.
+La información será tratada de forma confidencial, de acuerdo con la normativa legal vigente, resguardando los aspectos éticos y bioéticos del estudio. 
+Usted no esta obligado a proporcionar su nombre real ni su correo si no quiere ser informado de sus resultados, y si lo hace los datos se gestionarán mediante técnicas de anonimización, adoptando códigos para proteger su identidad.
+Los resultados de la investigación, basados en los datos analizados a partir del estudio que incluye su participación, podrían ser divulgados en publicaciones académicas o conferencias, pero sin incluir información que permita identificarle.
+Todos los datos obtenidos con su participación serán custodiados por el investigador Diego Neira y almacenados en el servicio supabase y en el disco local de Diego Neira, durante un periodo no superior a dos años y posteriormente eliminados de forma definitiva.
+Derechos del participante
+Su participación en este estudio es completamente libre y voluntaria.
+Usted tiene los siguientes derechos: rechazar participar sin consecuencias negativas, o si decide participar: (i) retirarse del estudio en cualquier momento sin necesidad de justificar su decisión; (ii) solicitar la eliminación de los datos recopilados hasta el momento de su retiro; (iii) solicitar información y obtener del/la investigador/a responsable la confirmación acerca de si sus datos personales están siendo tratados por él/ella, y acceder a ellos en su caso, y (iv) solicitar y obtener del investigador responsable que modifique o complete sus datos personales, cuando estos sean tratados por él/ella, y sean inexactos, desactualizados o incompletos. 
+Una vez finalizado el estudio, los resultados generales estarán disponibles para todos los participantes que deseen conocerlos. Estos resultados se presentarán de manera agregada garantizando la confidencialidad de los datos personales. 
+Si usted desea ser informado sobre los resultados del estudio, puede solicitarlo directamente el investigador/a responsable.
+Su decisión de participar o no participar no afectará su relación con la institución (o instituciones) involucradas en la investigación, ni con el/ la investigador(a) responsable y/o con el equipo de investigación.
+Costos y Compensacion:Su participación en este estudio no significará ningún costo para usted.
+- DECLARACIÓN DE CONSENTIMIENTO
+He leído y comprendido la información proporcionada en este documento. 
+He tenido la oportunidad de realizar preguntas sobre el estudio que se realiza en el marco de la investigación, las cuales han sido respondidas satisfactoriamente. 
+Comprendo que mi participación es libre y voluntaria y que puedo reevaluar mi participación y retirarme en cualquier momento sin necesidad de justificar mi decisión ni sufrir consecuencias negativas.
+Autorizo a el/la investigador(a) responsable a usar los datos obtenidos para los propósitos del estudio en el marco de la investigación informada y la publicación de los resultados en los términos planteados anteriormente.
+Al aceptar este documento no renunciaré a ningún derecho que me asista. Además, recibiré una copia firmada de este, en el presente acto.
+Declaro mi consentimiento para participar en este estudio bajo los términos anteriormente descritos.
+2. debe identificar solo con el nombre y tener un tick que diga: acepto lo antes expuesto
+3. En la segunda pantalla deja lo de la pantalla inicial actual pero que no sea redundante y pon: un tick que diga "quiero conocer mis resultados relativos a mi grupo" y que al activarlo aparezca donde poner el correo electronico

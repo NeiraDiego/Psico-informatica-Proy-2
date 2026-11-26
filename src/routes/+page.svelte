@@ -13,6 +13,8 @@
 	let screen = $state<Screen>('register');
 	let name = $state('');
 	let email = $state('');
+	let consentAccepted = $state(false);
+	let wantsRelativeResults = $state(false);
 	let returning = $state(false);
 	let group = $state<Group>('A');
 	let puzzlePosition = $state(0);
@@ -135,8 +137,18 @@
 	}
 
 	async function register() {
-		const normalized = email.trim().toLowerCase();
-		if (!name.trim() || !/^\S+@\S+\.\S+$/.test(normalized)) return;
+		if (!name.trim()) return;
+		let normalized = email.trim().toLowerCase();
+		if (wantsRelativeResults && !/^\S+@\S+\.\S+$/.test(normalized)) return;
+		if (!wantsRelativeResults) {
+			const keyName = `queens-anonymous-identity:${name.trim().toLowerCase()}`;
+			let anonymousId = localStorage.getItem(keyName);
+			if (!anonymousId) {
+				anonymousId = crypto.randomUUID();
+				localStorage.setItem(keyName, anonymousId);
+			}
+			normalized = `participant-${anonymousId}@example.invalid`;
+		}
 		returning = hasKnownEmail(normalized);
 		if (!returning) {
 			const stored = localStorage.getItem('queens-demo-emails');
@@ -154,7 +166,12 @@
 			const savedGroup = localStorage.getItem(`queens-assigned-group:${normalized}`);
 			if (savedGroup === 'A' || savedGroup === 'B' || savedGroup === 'C' || savedGroup === 'D' || savedGroup === 'E') group = savedGroup;
 		}
-		screen = returning ? 'hub' : 'overview';
+		screen = returning ? 'hub' : 'tutorial';
+	}
+
+	function continueFromConsent() {
+		if (!name.trim() || !consentAccepted) return;
+		screen = 'overview';
 	}
 
 	async function registerServerSession(experimenterName: string, experimenterEmail: string, registeredParticipantName: string | null): Promise<Group | null> {
@@ -188,12 +205,14 @@
 		tutorialDragComplete = false;
 		tutorialTwoCells = Array.from({ length: 25 }, () => 'empty');
 		tutorialThreeCells = Array.from({ length: 25 }, () => 'empty');
-		screen = 'overview';
+		screen = 'tutorial';
 	}
 
 	function changeUser() {
 		name = '';
 		email = '';
+		consentAccepted = false;
+		wantsRelativeResults = false;
 		returning = false;
 		sessionRegistrationStatus = 'idle';
 		screen = 'register';
@@ -414,19 +433,37 @@
 
 	{#if screen === 'register'}
 		<section class="panel">
-			<h2>Bienvenidos a este mini-experimento</h2>
-			<p>Consiste en jugar a un juego llamado Queens, disponible en varios lugares, entre ellos LinkedIn. Si ya lo conoces, por favor informa a la persona que te invito a participar.</p>
-			<h3>Explicación</h3>
-			<p>El experimento consiste en buscar, en un tablero parecido a uno de ajedrez, reinas ocultas. Se medirá cuánto tiempo te demoras en encontrarlas y cuántos movimientos necesitas para hacerlo. Si no lo consigues, se medirá cuántas reinas pudiste encontrar.</p>
-			<h3>Protección de datos</h3>
-			<p>Los datos se reportarán de forma completamente anónima. Aunque puedes optar, solo si quieres, a conocer tu lugar en el ranking de jugadores de tu grupo. No sabrás los nombres de los demás ni ellos el tuyo.</p>
-			<p>Tus datos se almacenarán por el tiempo necesario para realizar los análisis y podrían utilizarse en una extensión de este mismo estudio, siempre de forma anónima. Todo dato personal será desechado en un plazo no mayor a dos años.</p>
-			<h3>Consentimiento</h3>
-			<p>El puntaje obtenido solo refleja el desempeño puntual y no pretende medir ningún tipo de inteligencia.</p>
-			<p>Al presionar Aceptar, informas que leíste y estás de acuerdo con lo anterior. Luego verás un pequeño tutorial y tres tableros que deberás resolver en 120 segundos.</p>
-			<form onsubmit={(event) => { event.preventDefault(); register(); }}>
+			<h2>Consentimiento informado</h2>
+			<p><strong>Investigador principal:</strong> Diego Neira</p>
+			<p><strong>Investigadora asistente:</strong> Constanza Greig</p>
+			<p><strong>Título de la investigación:</strong> Videojuego Queens: desempeño en tareas de resolución de problemas en tiempo limitado.</p>
+			<h3>Objetivo de la investigación</h3>
+			<p>Recolectar información sobre el desempeño en determinadas tareas realizadas en un tiempo limitado y comparar grupos expuestos a condiciones diferentes. Para ello se eligió el minijuego Queens, que se describirá más adelante.</p>
+			<h3>Descripción de la participación</h3>
+			<p>Se le invita a participar completando un pequeño tutorial y, posteriormente, jugando tres tableros con tiempo limitado.</p>
+			<h3>Beneficios esperados</h3>
+			<p>Su participación ayudará a comprender cómo las condiciones en que se ejecutan tareas de resolución de problemas afectan el desempeño. Esto puede contribuir a mejorar las condiciones de quienes dependen de dicho desempeño.</p>
+			<p><strong>Importante:</strong> las personas participantes no tendrán beneficios directos, más allá de poder jugar libremente todos los tableros disponibles.</p>
+			<h3>Confidencialidad</h3>
+			<p>Toda la información recopilada se utilizará exclusivamente para los fines específicos de este estudio y de la investigación propuesta. Solo accederán a ella los miembros del equipo investigador: Diego Neira y Constanza Greig.</p>
+			<p>La información será tratada de forma confidencial, de acuerdo con la normativa legal vigente y resguardando los aspectos éticos y bioéticos del estudio.</p>
+			<p>No está obligado/a a proporcionar su nombre real ni su correo electrónico, salvo que desee ser informado/a de sus resultados. Si proporciona datos personales, estos se gestionarán mediante técnicas de anonimización y códigos destinados a proteger su identidad.</p>
+			<p>Los resultados de la investigación podrán divulgarse en publicaciones académicas o conferencias, pero no incluirán información que permita identificarle.</p>
+			<p>Todos los datos obtenidos serán custodiados por Diego Neira y almacenados en Supabase y en su disco local por un período máximo de dos años. Posteriormente, serán eliminados de forma definitiva.</p>
+			<h3>Derechos de la persona participante</h3>
+			<p>Su participación es completamente libre y voluntaria. Puede rechazar participar sin consecuencias negativas o, si decide participar, retirarse en cualquier momento sin justificar su decisión; solicitar la eliminación de los datos recopilados hasta ese momento; solicitar información sobre el tratamiento de sus datos y acceder a ellos; y solicitar la modificación o complementación de sus datos personales cuando sean inexactos, desactualizados o incompletos.</p>
+			<p>Una vez finalizado el estudio, los resultados generales estarán disponibles para quienes deseen conocerlos. Se presentarán de manera agregada, garantizando la confidencialidad de los datos personales. Si desea conocerlos, puede solicitarlo directamente al investigador responsable.</p>
+			<p>Su decisión de participar o no participar no afectará su relación con las instituciones involucradas, el investigador responsable ni el equipo de investigación.</p>
+			<h3>Costos y compensación</h3>
+			<p>Su participación en este estudio no significará ningún costo para usted.</p>
+			<h3>Declaración de consentimiento</h3>
+			<p>He leído y comprendido la información proporcionada en este documento. He tenido la oportunidad de realizar preguntas sobre el estudio, las cuales han sido respondidas satisfactoriamente.</p>
+			<p>Comprendo que mi participación es libre y voluntaria, que puedo reevaluar mi decisión y retirarme en cualquier momento sin necesidad de justificarla ni sufrir consecuencias negativas.</p>
+			<p>Autorizo al investigador responsable a utilizar los datos obtenidos para los propósitos del estudio y la publicación de sus resultados en los términos planteados anteriormente. Al aceptar este documento no renuncio a ningún derecho que me asista y recibiré una copia firmada de este, en el presente acto.</p>
+			<p>Declaro mi consentimiento para participar en este estudio bajo los términos anteriormente descritos.</p>
+			<form onsubmit={(event) => { event.preventDefault(); continueFromConsent(); }}>
 				<label>Nombre <input bind:value={name} autocomplete="name" required /></label>
-				<label>Correo electrónico <input bind:value={email} type="email" autocomplete="email" required /></label>
+				<label class="checkbox"><input bind:checked={consentAccepted} type="checkbox" required /> Acepto lo antes expuesto.</label>
 				<button>Aceptar y continuar</button>
 			</form>
 		</section>
@@ -443,14 +480,20 @@
 		</section>
 	{:else if screen === 'overview'}
 		<section class="panel">
-			<h2>Información general</h2>
-			<p>Resolverás {experimentConfig.puzzleCount} tableros. Cada tarea tendrá un límite de 120 segundos.</p>
-			{#if additionalInfoGroups[group]}<p class="warning">{groupCWarning}</p>{/if}
-			<button onclick={() => screen = 'tutorial'}>Ver tutorial</button>
+			<h2>Bienvenida al mini-experimento</h2>
+			<p>Jugarás Queens, un juego de lógica disponible, entre otros lugares, en LinkedIn. Si ya lo conoces, por favor informa a la persona que te invitó a participar.</p>
+			<p>El objetivo es encontrar reinas ocultas en un tablero. Se medirá el tiempo que demoras, la cantidad de movimientos que realizas y, si no completas la tarea, cuántas reinas logras encontrar.</p>
+			<p>Primero verás un breve tutorial y luego resolverás {experimentConfig.puzzleCount} tableros. Cada tablero tiene un límite de 120 segundos. El puntaje refleja únicamente el desempeño puntual en esta tarea y no mide ningún tipo de inteligencia.</p>
+			<form onsubmit={(event) => { event.preventDefault(); register(); }}>
+				<label class="checkbox"><input bind:checked={wantsRelativeResults} type="checkbox" /> Quiero conocer mis resultados relativos a mi grupo.</label>
+				{#if wantsRelativeResults}<label>Correo electrónico <input bind:value={email} type="email" autocomplete="email" required /></label>{/if}
+				<button>Comenzar tutorial</button>
+			</form>
 		</section>
 	{:else if screen === 'tutorial'}
 		<section class="panel">
 			<p class="eyebrow">Tutorial {tutorialStep} de 3</p>
+			{#if additionalInfoGroups[group]}<p class="warning">{groupCWarning}</p>{/if}
 			{#if tutorialStep === 1}
 				<h2>Una reina bloquea sus celdas contiguas</h2>
 				<p>Debe haber una, y solo una, reina por fila y por columna. Las reinas no pueden estar en celdas contiguas, ni siquiera en diagonal.</p>
