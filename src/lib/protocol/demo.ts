@@ -46,7 +46,7 @@ export const difficultyValidationPuzzles: PuzzleDefinition[] = [
 		label: 'QueensGame 6x6 · standard 468 modificado',
 		availability: 'experimental',
 		regions: modified468.regions.map((row, rowIndex) => row.map((region, columnIndex) => (
-			rowIndex === 5 && (columnIndex === 2 || columnIndex === 3) ? modified468.regions[4][2] : region
+			(rowIndex === 2 || rowIndex === 3) && columnIndex === 5 ? modified468.regions[2][4] : region
 		)))
 	},
 	catalogPuzzle('queensgame-7x7-standard-158'),
