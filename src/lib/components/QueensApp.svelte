@@ -100,7 +100,7 @@
 	const tutorialThreeOrangeCells = [5, 6, 8, 9];
 	const tutorialThreeOrangeMarked = $derived(tutorialThreeOrangeCells.every((index) => tutorialThreeCells[index] === 'mark'));
 	const tutorialThreeGreenQueen = $derived(tutorialThreeCells[7] === 'queen');
-	const tutorialThreeEdgeCells = [15, 17];
+	const tutorialThreeEdgeCells = [18, 19];
 	const tutorialThreeComplete = $derived(tutorialThreeOrangeMarked && tutorialThreeGreenQueen && tutorialThreeEdgeCells.every((index) => tutorialThreeCells[index] === 'mark'));
 
 	onMount(() => {
@@ -579,7 +579,7 @@
 				<ol class="tutorial-steps">
 					<li class:completed={tutorialThreeOrangeMarked}>Si una fila completa es de un solo color, sabemos que la reina de ese color está en esa fila. En este ejemplo, en la fila 1 es completamente naranja, por lo que sabemos que la reina naranja está ahí y podemos descartar las celdas de ese color en la segunda y en el resto del tablero: marca las celdas naranjas de la fila 2 con X.</li>
 					{#if tutorialThreeOrangeMarked}<li class:completed={tutorialThreeGreenQueen}>Si en una fila solo queda una casilla, esta debe ser una reina. Marca la reina verde en la segunda fila.</li>{/if}
-					{#if tutorialThreeGreenQueen}<li class:completed={tutorialThreeComplete}>Si todas las celdas de un color están en una sola fila o columna, la reina de esa fila o columna debe ser de ese color. Miremos la fila 4: como todas las celdas rojas están en esa única fila, sabemos que A4 y C4 no pueden ser la reina roja porque sus columnas ya tienen una reina; márcalas con X y con esto ya podríamos encontrar a nuestra reina de B4.</li>{/if}
+					{#if tutorialThreeGreenQueen}<li class:completed={tutorialThreeComplete}>Si todas las celdas de un color están en una sola fila o columna, la reina de esa fila o columna debe ser de ese color. Miremos la fila 4: como todas las celdas rojas están en esa única fila, sabemos que en esa fila debe ubicarse la reina roja; por lo tanto, D4 y E4 no pueden ser la reina celeste. Márcalas con X.</li>{/if}
 				</ol>
 				<QueensBoard board={tutorialBoards[2].board} initialCells={tutorialThreeInitialCells} showRowNumbers showColumnLetters cellClass={tutorialThreeCellClass} onmove={trackTutorialThreeMovement} />
 				<div class="actions"><button disabled={!tutorialThreeComplete} onclick={() => goto('/experiment')}>Comenzar experimento</button><button class="secondary" onclick={() => goto('/menu')}>Volver al menú inicial</button></div>
