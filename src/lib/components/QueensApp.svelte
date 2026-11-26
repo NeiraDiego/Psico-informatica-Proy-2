@@ -33,6 +33,7 @@
 	let puzzleLocked = $state(false);
 	let timeRemainingMs = $state(120000);
 	let deliveryStatus = $state<'idle' | 'pending' | 'sent'>('idle');
+	let deliveryError = $state('');
 	let sessionRegistrationStatus = $state<'idle' | 'pending' | 'ready'>('idle');
 	let exportMessage = $state('');
 	let freePuzzle = $state<PuzzleDefinition>(demoPuzzles[1]);
@@ -325,8 +326,14 @@
 
 	async function saveAttempt(attempt: CompletedAttempt) {
 		deliveryStatus = 'pending';
-		await queueAttempt(attempt);
-		await flushSavedAttempts();
+		deliveryError = '';
+		try {
+			await queueAttempt(attempt);
+			await flushSavedAttempts();
+		} catch (error) {
+			console.error('No se pudo guardar el intento localmente.', error);
+			deliveryError = 'No se pudo guardar el intento en este navegador. Revisa la consola para conocer el detalle.';
+		}
 	}
 
 	async function flushSavedAttempts() {
@@ -335,6 +342,7 @@
 			deliveryStatus = result.pending === 0 ? 'sent' : 'pending';
 		} catch {
 			deliveryStatus = 'pending';
+			deliveryError = 'No se pudieron enviar los resultados. Permanecerán pendientes en este navegador.';
 		}
 	}
 
@@ -612,6 +620,7 @@
 				<p>Las dificultades fueron artificialmente altas excepto en el último tablero, que fue de dificultad intermedia e idéntico para todos los grupos.</p>
 			{/if}
 			<div class="actions"><button onclick={() => goto('/free_play')}>Juego libre</button><button class="secondary" onclick={() => goto('/menu')}>Opciones de regreso</button>{#if isDemoAdmin}<button class="secondary" onclick={() => goto('/settings')}>Configuración</button>{/if}</div>
+			{#if deliveryError}<p class="warning">{deliveryError}</p>{:else if deliveryStatus === 'sent'}<p class="upload-message">Resultados respaldados correctamente.</p>{:else if deliveryStatus === 'pending'}<p class="warning">Resultados pendientes de envío.</p>{/if}
 		</section>
 	{:else if screen === 'free-play'}
 		<section class="game-layout">

@@ -50,8 +50,12 @@ export async function flushAttemptOutbox() {
 			if (response.ok) {
 				await removeQueuedAttempt(attempt.client_attempt_id);
 				sent += 1;
+			} else {
+				console.error(`No se pudo enviar el intento ${attempt.client_attempt_id}.`, response.status, await response.text());
+				break;
 			}
 		} catch {
+			console.error(`Error de red al enviar el intento ${attempt.client_attempt_id}.`);
 			break;
 		}
 	}
